@@ -1,6 +1,7 @@
 package com.quant.backtest.multi.strategy.calculators;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +13,7 @@ public class InputCalculator {
     public Map<String, BigDecimal> calculateWeights(Map<String, BigDecimal> sortinos, Map<String, BigDecimal> flags) {
 	Map<String, BigDecimal> weights = new HashMap<String, BigDecimal>();
 	for (String strategy : sortinos.keySet()) {
-	    weights.put(strategy, flags.get(strategy).multiply(sortinos.get(strategy)));
+	    weights.put(strategy, flags.get(strategy).multiply(sortinos.get(strategy)).setScale(2, RoundingMode.HALF_EVEN));
 	}
 	return weights;
     }
