@@ -1,7 +1,5 @@
 package com.quant.backtest.multi.strategy.processors;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,49 +10,45 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.quant.backtest.multi.strategy.calculators.InputCalculator;
 import com.quant.backtest.multi.strategy.properties.FilePropertiesLoader;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
-import com.quant.backtest.multi.strategy.readers.CsvReader;
-import com.quant.backtest.multi.strategy.utils.DateUtils;
+import com.quant.backtest.multi.strategy.utils.CsvUtils;
 
 @Component
 public class OptimalMultiStrategyProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(OptimalMultiStrategyProcessor.class);
+    private final Double DEFAULT_DOUBLE = 0.0d;
 
-    @Autowired
-    private InputCalculator inputCalculator;
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private FilePropertiesLoader filePropertiesLoader;
     @Autowired
-    private CsvReader csvReader;
-    @Autowired
-    private DateUtils dateUtils;
+    private CsvUtils csvUtils;
+    
 
-    public void process() {
-	Map<String, BigDecimal> strategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(),
-		inputPropertiesLoader.getFlag());
+    public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) {
 	Map<String, Set<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
-	    allStrategyTickers.put(strategyName,
-		    csvReader.readCsv(filePropertiesLoader.getFilePath() + strategyName + "/BARNBY GROWTH "
-			    + strategyName + ".Buy.STG." + dateUtils.getTMinus1Date(filePropertiesLoader.getInputDate())
-			    + ".csv"));
+	    allStrategyTickers.put(strategyName, 
+		    csvUtils.readBacktestedCsv(filePropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
 	}
-	Map<String, BigDecimal> optimalWeightedStrategy = new HashMap<>();
-	for (Entry<String, BigDecimal> strategyWeight : strategyWeights.entrySet()) {
+	
+	Map<String, Double> optimalWeightedStrategy = new HashMap<>();
+	for (Entry<String, Double> strategyWeight :  allStrategyWeights.entrySet()) {
+	    if (DEFAULT_DOUBLE.equals(strategyWeight.getValue()))
+		continue;
+	    Double individualTickerWeightPercent = ((strategyWeight.getValue()/totalWeight)*100.00d)/(allStrategyTickers.get(strategyWeight.getKey()).size());
+	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with ticers {}", individualTickerWeightPercent, strategyWeight.getKey(), allStrategyTickers.get(strategyWeight.getKey()).size());
 	    for (String ticker : allStrategyTickers.get(strategyWeight.getKey())) {
-		BigDecimal individualWeight = strategyWeight.getValue().divide(BigDecimal.valueOf(allStrategyTickers.get(strategyWeight.getKey()).size()), RoundingMode.HALF_EVEN);
-		if (BigDecimal.ZERO.setScale(2, RoundingMode.HALF_EVEN).equals(individualWeight)) 
-		    break;
 		if (optimalWeightedStrategy.containsKey(ticker))
-		    optimalWeightedStrategy.put(ticker, optimalWeightedStrategy.get(ticker).add(individualWeight));
+		    optimalWeightedStrategy.put(ticker, optimalWeightedStrategy.get(ticker)+individualTickerWeightPercent);
 		else
-		    optimalWeightedStrategy.put(ticker, individualWeight);
+		    optimalWeightedStrategy.put(ticker, individualTickerWeightPercent);
 	    }
 	}
+	logger.info("Optimal {} day strategy = {}",date, optimalWeightedStrategy);
+	return optimalWeightedStrategy;
     }
 }

@@ -3,11 +3,12 @@ package com.quant.backtest.multi.strategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.quant.backtest.multi.strategy.processors.OptimalMultiStrategyProcessor;
+import com.quant.backtest.multi.strategy.processors.DeltaValueGenerator;
 
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
@@ -15,17 +16,18 @@ public class ConsoleAppliaction implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
     
     @Autowired
-    private OptimalMultiStrategyProcessor optimalMultiStrategyProcessor;
+    private DeltaValueGenerator deltaValueGenerator;
     
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
+	application.setBannerMode(Banner.Mode.OFF);
 	application.run("");
     }
     
     @Override
     public void run(String... args) throws Exception {
 	logger.info("Starting Application");
-	optimalMultiStrategyProcessor.process();
+	deltaValueGenerator.process();
     }
 
 }

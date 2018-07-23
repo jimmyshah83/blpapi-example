@@ -8,9 +8,22 @@
       </pattern>
     </encoder>
   </appender>
+  
+  <appender name="SAVE-TO-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/log.log</file>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <Pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n</Pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>${LOG_PATH}/archived/log_%d{dd-MM-yyyy}.log</fileNamePattern>
+        <maxHistory>10</maxHistory>
+        <totalSizeCap>100MB</totalSizeCap>
+    </rollingPolicy>
+</appender>
 
   <root level="info">
     <appender-ref ref="STDOUT"/>
+    <!-- <appender-ref ref="SAVE-TO-FILE"/>  -->
   </root>
  
 </configuration>

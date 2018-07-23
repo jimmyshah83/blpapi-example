@@ -1,6 +1,5 @@
 package com.quant.backtest.multi.strategy.properties;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,20 +14,20 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties
 public class InputPropertiesLoader {
 
-    private Map<String, BigDecimal> sortino = new HashMap<>();
-    private Map<String, BigDecimal> flag = new HashMap<>();
+    private Map<String, Double> sortino = new HashMap<>();
+    private Map<String, Integer> flag = new HashMap<>();
     private Map<String, String> strategy = new HashMap<>();
     
-    public void setSortino(Map<String, BigDecimal> sortino) {
+    public void setSortino(Map<String, Double> sortino) {
         this.sortino = sortino;
     }
-    public void setFlag(Map<String, BigDecimal> flag) {
+    public void setFlag(Map<String, Integer> flag) {
         this.flag = flag;
     }
-    public Map<String, BigDecimal> getSortino() {
+    public Map<String, Double> getSortino() {
         return sortino;
     }
-    public Map<String, BigDecimal> getFlag() {
+    public Map<String, Integer> getFlag() {
         return flag;
     }
     public Map<String, String> getStrategy() {
