@@ -37,17 +37,27 @@ public class DeltaValueGenerator {
 	    logger.error("Error reading previous file {}",e);
 	    e.printStackTrace();
 	}
+	
+	for (Entry<String, Double> currentActual : currentActuals.entrySet()) {
+		if (!previousActuals.containsKey(currentActual.getKey())) {
+			logger.info("BUY {} percent {}",  currentActual.getKey(), currentActual.getValue());
+		}
+	}	
 	for (Entry<String, Double> previousActual : previousActuals.entrySet()) {
+		if (!currentActuals.containsKey(previousActual.getKey())) {
+			logger.info("SELL {} percent {}",  previousActual.getKey(), previousActual.getValue());
+			continue;
+		}
 	    if (currentActuals.containsKey(previousActual.getKey())) {
-		BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(2, RoundingMode.HALF_EVEN);
-		BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(2, RoundingMode.HALF_EVEN);
-		BigDecimal differenceVal = currentVal.subtract(previousVal);
-		BigDecimal deltaVal = filePropertiesLoader.getDelta();
-		if (differenceVal.signum() == -1) {
-		    if (differenceVal.abs().compareTo(deltaVal) == 1)
-			 logger.info("SELL {} with difference {}",  previousActual.getKey(), differenceVal.toString());
-		} else if (differenceVal.compareTo(deltaVal) == 1)
-		    logger.info("BUY {} with difference {}",  previousActual.getKey(), differenceVal.toString());
+			BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(2, RoundingMode.HALF_EVEN);
+			BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(2, RoundingMode.HALF_EVEN);
+			BigDecimal differenceVal = currentVal.subtract(previousVal);
+			BigDecimal deltaVal = filePropertiesLoader.getDelta();
+			if (differenceVal.signum() == -1) {
+			    if (differenceVal.abs().compareTo(deltaVal) == 1)
+				 logger.info("SELL {} percent {}",  previousActual.getKey(), differenceVal);
+			} else if (differenceVal.compareTo(deltaVal) == 1)
+			    logger.info("BUY {} percent {}",  previousActual.getKey(), differenceVal);
 	    }
 	}
     }
