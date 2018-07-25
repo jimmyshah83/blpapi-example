@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.properties.FilePropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
+import com.quant.backtest.multi.strategy.utils.DateUtils;
+import com.quant.backtest.multi.strategy.utils.FileUtils;
 
 @Component
 public class DeltaValueGenerator {
@@ -23,16 +25,25 @@ public class DeltaValueGenerator {
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
     
     @Autowired
-    private CsvUtils csvUtils;
-    
-    @Autowired
     private FilePropertiesLoader filePropertiesLoader;
+    @Autowired
+    private CsvUtils csvUtils;
+    @Autowired
+    private DateUtils dateUtils;
+    @Autowired
+    private FileUtils fileUtils;
 
     public void process() {
 	Map<String, Double> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, Double> previousActuals = null;
+	String filePath = "";
+	long decValue = 0;
+	while(!fileUtils.doesFileExists(filePath)) {
+		filePath = filePropertiesLoader.getOutputFilePath()+"actual-"+dateUtils.decrementCurrentDate(++decValue)+".csv";
+	}
+	logger.info("Fetching Previous File from Path {}", filePath);
 	try {
-	    previousActuals = csvUtils.readCsvToMap(filePropertiesLoader.getOutputFilePath()+"actual-20180721.csv");
+	    previousActuals = csvUtils.readCsvToMap(filePath);
 	} catch (IOException e) {
 	    logger.error("Error reading previous file {}",e);
 	    e.printStackTrace();
@@ -55,7 +66,7 @@ public class DeltaValueGenerator {
 			BigDecimal deltaVal = filePropertiesLoader.getDelta();
 			if (differenceVal.signum() == -1) {
 			    if (differenceVal.abs().compareTo(deltaVal) == 1)
-				 logger.info("SELL {} percent {}",  previousActual.getKey(), differenceVal);
+				 logger.info("SELL {} percent {}",  previousActual.getKey(), differenceVal.abs());
 			} else if (differenceVal.compareTo(deltaVal) == 1)
 			    logger.info("BUY {} percent {}",  previousActual.getKey(), differenceVal);
 	    }

@@ -13,4 +13,8 @@ public class DateUtils {
     public String getCurrentDate() {
 	return dateTimeFormatter.format(LocalDate.now());
     }
+    
+    public String decrementCurrentDate(long decrementValue) {
+    	return dateTimeFormatter.format(LocalDate.now().minusDays(decrementValue));
+    }
 }

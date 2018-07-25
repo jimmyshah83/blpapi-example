@@ -1,29 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>
-        %d{dd-MM-yyyy HH:mm:ss.SSS} %magenta([%thread]) %highlight(%-5level) %logger{36}.%M - %msg%n
-      </pattern>
-    </encoder>
-  </appender>
-  
-  <appender name="SAVE-TO-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_PATH}/log.log</file>
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-        <Pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n</Pattern>
-    </encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <fileNamePattern>${LOG_PATH}/archived/log_%d{dd-MM-yyyy}.log</fileNamePattern>
-        <maxHistory>10</maxHistory>
-        <totalSizeCap>100MB</totalSizeCap>
-    </rollingPolicy>
-</appender>
+  <appender name="DebugLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${log.dir}/debug/${app.name}.debug</File>
+		<encoder>
+			<pattern>%date %.-3level [%-24.24thread] %-35.35logger{35} - %message%n</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<maxIndex>10</maxIndex>
+			<FileNamePattern>${log.dir}/debug/${app.name}.debug.%i</FileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>250MB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
 
-  <root level="info">
-    <appender-ref ref="STDOUT"/>
-    <!-- <appender-ref ref="SAVE-TO-FILE"/>  -->
-  </root>
+	<appender name="ErrorLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>${log.dir}/error/${app.name}.error</File>
+		<encoder>
+			<pattern>%date %-5level [%-24.24thread] %-30.30logger{30} - %message%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<maxIndex>10</maxIndex>
+			<FileNamePattern>${log.dir}/error/${app.name}.error.%i
+			</FileNamePattern>
+		</rollingPolicy>
+		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+	
+	<!-- Local -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>
+				%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+			</Pattern>
+		</layout>
+	</appender>
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="DebugLog" />
+		<appender-ref ref="ErrorLog" />
+	</root>
  
 </configuration>
