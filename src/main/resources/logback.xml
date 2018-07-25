@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <appender name="DebugLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender name="InfoLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>${log.dir}/debug/${app.name}.debug</File>
 		<encoder>
 			<pattern>%date %.-3level [%-24.24thread] %-35.35logger{35} - %message%n</pattern>
 		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<maxIndex>10</maxIndex>
 			<FileNamePattern>${log.dir}/debug/${app.name}.debug.%i</FileNamePattern>
@@ -43,9 +46,7 @@
 	</appender>
 
 	<root level="DEBUG">
-		<appender-ref ref="STDOUT" />
-		<appender-ref ref="DebugLog" />
-		<appender-ref ref="ErrorLog" />
+		<appender-ref ref="InfoLog" />
 	</root>
  
 </configuration>

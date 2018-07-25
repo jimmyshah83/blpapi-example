@@ -44,7 +44,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	logger.info("Total Strategy Weight = {} ", totalWeight);
 	
 	Map<String, Map<String, Double>> allTenDaysTicker = new HashMap<>();
-	for (String date : filePropertiesLoader.getInputDate()) {
+	for (String date : inputPropertiesLoader.getInputDate()) {
 	    allTenDaysTicker.put(date, optimalMultiStrategyProcessor.process(allStrategyWeights, totalWeight, date));
 	}
 	Map<String, Double> finalAveragedTickers = new HashMap<>();
@@ -59,7 +59,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    }
 	}
 	for (String ticker : duplicateTickers) {
-	    finalAveragedTickers.put(ticker, finalAveragedTickers.get(ticker)/filePropertiesLoader.getinputDateSize());
+	    finalAveragedTickers.put(ticker, finalAveragedTickers.get(ticker)/inputPropertiesLoader.getinputDateSize());
 	}
 	logger.info("Final set of tickers are: {}", finalAveragedTickers);
 	try {

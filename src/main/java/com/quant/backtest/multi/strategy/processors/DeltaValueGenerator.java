@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.properties.FilePropertiesLoader;
+import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.FileUtils;
@@ -24,6 +25,8 @@ public class DeltaValueGenerator {
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
     
+    @Autowired
+    private InputPropertiesLoader inputPropertiesLoader;    
     @Autowired
     private FilePropertiesLoader filePropertiesLoader;
     @Autowired
@@ -63,7 +66,7 @@ public class DeltaValueGenerator {
 			BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(2, RoundingMode.HALF_EVEN);
 			BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(2, RoundingMode.HALF_EVEN);
 			BigDecimal differenceVal = currentVal.subtract(previousVal);
-			BigDecimal deltaVal = filePropertiesLoader.getDelta();
+			BigDecimal deltaVal = inputPropertiesLoader.getDelta();
 			if (differenceVal.signum() == -1) {
 			    if (differenceVal.abs().compareTo(deltaVal) == 1)
 				 logger.info("SELL {} percent {}",  previousActual.getKey(), differenceVal.abs());
