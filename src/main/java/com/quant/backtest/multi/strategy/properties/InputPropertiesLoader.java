@@ -9,13 +9,11 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.lang.NonNull;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
 @Configuration
-@PropertySource("classpath:quant-input.properties")
 @ConfigurationProperties
 public class InputPropertiesLoader {
 
