@@ -16,36 +16,39 @@ import com.quant.backtest.multi.strategy.utils.CsvUtils;
 @Component
 public class OptimalMultiStrategyProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(OptimalMultiStrategyProcessor.class);
-    private final Double DEFAULT_DOUBLE = 0.0d;
+	private static final Logger logger = LoggerFactory.getLogger(OptimalMultiStrategyProcessor.class);
+	private final Double DEFAULT_DOUBLE = 0.0d;
 
-    @Autowired
-    private InputPropertiesLoader inputPropertiesLoader;
-    @Autowired
-    private CsvUtils csvUtils;
-    
+	@Autowired
+	private InputPropertiesLoader inputPropertiesLoader;
+	@Autowired
+	private CsvUtils csvUtils;
 
-    public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) {
-	Map<String, Set<String>> allStrategyTickers = new HashMap<>();
-	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
-	    allStrategyTickers.put(strategyName, 
-		    csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
+	public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) {
+		Map<String, Set<String>> allStrategyTickers = new HashMap<>();
+		for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
+			allStrategyTickers.put(strategyName, csvUtils.readBacktestedCsv(
+					inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
+		}
+
+		Map<String, Double> optimalWeightedStrategy = new HashMap<>();
+		for (Entry<String, Double> strategyWeight : allStrategyWeights.entrySet()) {
+			if (DEFAULT_DOUBLE.equals(strategyWeight.getValue()))
+				continue;
+			Double individualTickerWeightPercent = ((strategyWeight.getValue() / totalWeight) * 100.00d)
+					/ (allStrategyTickers.get(strategyWeight.getKey()).size());
+			logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with ticers {}",
+					individualTickerWeightPercent, strategyWeight.getKey(),
+					allStrategyTickers.get(strategyWeight.getKey()).size());
+			for (String ticker : allStrategyTickers.get(strategyWeight.getKey())) {
+				if (optimalWeightedStrategy.containsKey(ticker))
+					optimalWeightedStrategy.put(ticker,
+							optimalWeightedStrategy.get(ticker) + individualTickerWeightPercent);
+				else
+					optimalWeightedStrategy.put(ticker, individualTickerWeightPercent);
+			}
+		}
+		logger.info("Optimal {} day strategy = {}", date, optimalWeightedStrategy);
+		return optimalWeightedStrategy;
 	}
-	
-	Map<String, Double> optimalWeightedStrategy = new HashMap<>();
-	for (Entry<String, Double> strategyWeight :  allStrategyWeights.entrySet()) {
-	    if (DEFAULT_DOUBLE.equals(strategyWeight.getValue()))
-		continue;
-	    Double individualTickerWeightPercent = ((strategyWeight.getValue()/totalWeight)*100.00d)/(allStrategyTickers.get(strategyWeight.getKey()).size());
-	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with ticers {}", individualTickerWeightPercent, strategyWeight.getKey(), allStrategyTickers.get(strategyWeight.getKey()).size());
-	    for (String ticker : allStrategyTickers.get(strategyWeight.getKey())) {
-		if (optimalWeightedStrategy.containsKey(ticker))
-		    optimalWeightedStrategy.put(ticker, optimalWeightedStrategy.get(ticker)+individualTickerWeightPercent);
-		else
-		    optimalWeightedStrategy.put(ticker, individualTickerWeightPercent);
-	    }
-	}
-	logger.info("Optimal {} day strategy = {}",date, optimalWeightedStrategy);
-	return optimalWeightedStrategy;
-    }
 }

@@ -12,22 +12,21 @@ import com.quant.backtest.multi.strategy.processors.DeltaValueGenerator;
 
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
-    
-    private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
-    
-    @Autowired
-    private DeltaValueGenerator deltaValueGenerator;
-    
-    public static void main(String[] args) throws Exception {
-	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
-	application.setBannerMode(Banner.Mode.OFF);
-	application.run("");
-    }
-    
-    @Override
-    public void run(String... args) throws Exception {
-	logger.info("Starting Application");
-	deltaValueGenerator.process();
-    }
 
+	private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
+
+	@Autowired
+	private DeltaValueGenerator deltaValueGenerator;
+
+	public static void main(String[] args) throws Exception {
+		SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
+		application.setBannerMode(Banner.Mode.OFF);
+		application.run("");
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		logger.info("Starting Application");
+		deltaValueGenerator.process();
+	}
 }

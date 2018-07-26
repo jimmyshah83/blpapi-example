@@ -20,10 +20,11 @@ import com.quant.backtest.multi.strategy.utils.FileUtils;
 public class DeltaValueGenerator {
 
 	private static final Logger logger = LoggerFactory.getLogger(DeltaValueGenerator.class);
+	private final int SCALE = 2;
+	private final RoundingMode ROUNDING_MODE = RoundingMode.HALF_EVEN;
 
 	@Autowired
 	private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
-
 	@Autowired
 	private InputPropertiesLoader inputPropertiesLoader;
 	@Autowired
@@ -52,18 +53,18 @@ public class DeltaValueGenerator {
 
 		for (Entry<String, Double> currentActual : currentActuals.entrySet()) {
 			if (!previousActuals.containsKey(currentActual.getKey())) {
-				logger.info("BUY {} percent {}", currentActual.getKey(), currentActual.getValue());
+				logger.info("BUY {} percent {}", currentActual.getKey(), new BigDecimal(currentActual.getValue()).setScale(SCALE, ROUNDING_MODE));
 			}
 		}
 		for (Entry<String, Double> previousActual : previousActuals.entrySet()) {
 			if (!currentActuals.containsKey(previousActual.getKey())) {
-				logger.info("SELL {} percent {}", previousActual.getKey(), previousActual.getValue());
+				logger.info("SELL {} percent {}", previousActual.getKey(), new BigDecimal(previousActual.getValue()).setScale(SCALE, ROUNDING_MODE));
 				continue;
 			}
 			if (currentActuals.containsKey(previousActual.getKey())) {
-				BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(2, RoundingMode.HALF_EVEN);
-				BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(2,
-						RoundingMode.HALF_EVEN);
+				BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(SCALE, ROUNDING_MODE);
+				BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(SCALE,
+						ROUNDING_MODE);
 				BigDecimal differenceVal = currentVal.subtract(previousVal);
 				BigDecimal deltaVal = inputPropertiesLoader.getDelta();
 				if (differenceVal.signum() == -1) {
