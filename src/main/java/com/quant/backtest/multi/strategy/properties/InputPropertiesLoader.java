@@ -28,6 +28,8 @@ public class InputPropertiesLoader {
     private String filePath;
     @NonNull
     private String outputFilePath;
+    @NonNull
+    private BigDecimal capital;
     
     public void setSortino(Map<String, Double> sortino) {
         this.sortino = sortino;
@@ -74,4 +76,10 @@ public class InputPropertiesLoader {
     public void setOutputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
     }
+	public void setCapital(String capital) {
+		this.capital = new BigDecimal(capital).setScale(2, RoundingMode.HALF_EVEN);;
+	}
+	public BigDecimal getCapital() {
+		return capital;
+	}
 }
