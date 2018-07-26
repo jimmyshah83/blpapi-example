@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
-import com.quant.backtest.multi.strategy.properties.FilePropertiesLoader;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 
@@ -28,8 +27,6 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private InputCalculator inputCalculator;
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
-    @Autowired
-    private FilePropertiesLoader filePropertiesLoader;
     @Autowired
     private OptimalMultiStrategyProcessor optimalMultiStrategyProcessor;
     @Autowired
@@ -63,7 +60,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	}
 	logger.info("Final set of tickers are: {}", finalAveragedTickers);
 	try {
-	    csvUtils.writeMapToCsv(filePropertiesLoader.getOutputFilePath(), finalAveragedTickers);
+	    csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), finalAveragedTickers);
 	} catch (IOException e) {
 	    logger.error("Failed to write CSV with error {}", e.getMessage());
 	}

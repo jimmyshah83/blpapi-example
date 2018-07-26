@@ -2,7 +2,7 @@
 <configuration>
 
   <appender name="InfoLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>${log.dir}/debug/${app.name}.debug</File>
+		<File>${log.dir}/debug/multi-strategy-backtest.debug</File>
 		<encoder>
 			<pattern>%date %.-3level [%-24.24thread] %-35.35logger{35} - %message%n</pattern>
 		</encoder>
@@ -11,7 +11,7 @@
 		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<maxIndex>10</maxIndex>
-			<FileNamePattern>${log.dir}/debug/${app.name}.debug.%i</FileNamePattern>
+			<FileNamePattern>${log.dir}/debug/multi-strategy-backtest.debug.%i</FileNamePattern>
 		</rollingPolicy>
 		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
 			<MaxFileSize>250MB</MaxFileSize>
@@ -19,7 +19,7 @@
 	</appender>
 
 	<appender name="ErrorLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>${log.dir}/error/${app.name}.error</File>
+		<File>${log.dir}/error/multi-strategy-backtest.error</File>
 		<encoder>
 			<pattern>%date %-5level [%-24.24thread] %-30.30logger{30} - %message%n</pattern>
 		</encoder>
@@ -28,7 +28,7 @@
 		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<maxIndex>10</maxIndex>
-			<FileNamePattern>${log.dir}/error/${app.name}.error.%i
+			<FileNamePattern>${log.dir}/error/multi-strategy-backtest.error.%i
 			</FileNamePattern>
 		</rollingPolicy>
 		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">

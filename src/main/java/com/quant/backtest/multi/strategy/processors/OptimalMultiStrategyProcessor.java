@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.quant.backtest.multi.strategy.properties.FilePropertiesLoader;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 
@@ -23,8 +22,6 @@ public class OptimalMultiStrategyProcessor {
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
-    private FilePropertiesLoader filePropertiesLoader;
-    @Autowired
     private CsvUtils csvUtils;
     
 
@@ -32,7 +29,7 @@ public class OptimalMultiStrategyProcessor {
 	Map<String, Set<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
 	    allStrategyTickers.put(strategyName, 
-		    csvUtils.readBacktestedCsv(filePropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
+		    csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
 	}
 	
 	Map<String, Double> optimalWeightedStrategy = new HashMap<>();

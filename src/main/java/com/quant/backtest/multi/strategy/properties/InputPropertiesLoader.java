@@ -24,6 +24,10 @@ public class InputPropertiesLoader {
     private BigDecimal delta;
     @NonNull
     private List<String> inputDate;
+    @NonNull
+    private String filePath;
+    @NonNull
+    private String outputFilePath;
     
     public void setSortino(Map<String, Double> sortino) {
         this.sortino = sortino;
@@ -57,5 +61,17 @@ public class InputPropertiesLoader {
     }
     public Double getinputDateSize() {
     	return Double.valueOf(inputDate.size());
+    }
+    public String getFilePath() {
+        return filePath;
+    }
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+    public String getOutputFilePath() {
+        return outputFilePath;
+    }
+    public void setOutputFilePath(String outputFilePath) {
+        this.outputFilePath = outputFilePath;
     }
 }
