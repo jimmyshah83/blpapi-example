@@ -7,14 +7,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DateUtils {
-    
+
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE;
-    
+
     public String getCurrentDate() {
 	return dateTimeFormatter.format(LocalDate.now());
     }
-    
+
     public String decrementCurrentDate(long decrementValue) {
-    	return dateTimeFormatter.format(LocalDate.now().minusDays(decrementValue));
+	return dateTimeFormatter.format(LocalDate.now().minusDays(decrementValue));
     }
 }

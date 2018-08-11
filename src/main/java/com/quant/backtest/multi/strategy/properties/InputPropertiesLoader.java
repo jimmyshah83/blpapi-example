@@ -30,56 +30,73 @@ public class InputPropertiesLoader {
     private String outputFilePath;
     @NonNull
     private BigDecimal capital;
-    
+
     public void setSortino(Map<String, Double> sortino) {
-        this.sortino = sortino;
+	this.sortino = sortino;
     }
+
     public void setFlag(Map<String, Integer> flag) {
-        this.flag = flag;
+	this.flag = flag;
     }
+
     public Map<String, Double> getSortino() {
-        return sortino;
+	return sortino;
     }
+
     public Map<String, Integer> getFlag() {
-        return flag;
+	return flag;
     }
+
     public Map<String, String> getStrategy() {
-        return strategy;
+	return strategy;
     }
+
     public void setStrategy(Map<String, String> strategy) {
-        this.strategy = strategy;
+	this.strategy = strategy;
     }
+
     public BigDecimal getDelta() {
-        return delta;
+	return delta;
     }
+
     public void setDelta(String delta) {
-        this.delta = new BigDecimal(delta).setScale(2, RoundingMode.HALF_EVEN);
+	this.delta = new BigDecimal(delta).setScale(2, RoundingMode.HALF_EVEN);
     }
+
     public List<String> getInputDate() {
-        return inputDate;
+	return inputDate;
     }
+
     public void setInputDate(String inputDate) {
-        this.inputDate = Arrays.asList(inputDate.split(","));
+	this.inputDate = Arrays.asList(inputDate.split(","));
     }
+
     public Double getinputDateSize() {
-    	return Double.valueOf(inputDate.size());
+	return Double.valueOf(inputDate.size());
     }
+
     public String getFilePath() {
-        return filePath;
+	return filePath;
     }
+
     public void setFilePath(String filePath) {
-        this.filePath = filePath;
+	this.filePath = filePath;
     }
+
     public String getOutputFilePath() {
-        return outputFilePath;
+	return outputFilePath;
     }
+
     public void setOutputFilePath(String outputFilePath) {
-        this.outputFilePath = outputFilePath;
+	this.outputFilePath = outputFilePath;
     }
-	public void setCapital(String capital) {
-		this.capital = new BigDecimal(capital).setScale(2, RoundingMode.HALF_EVEN);;
-	}
-	public BigDecimal getCapital() {
-		return capital;
-	}
+
+    public void setCapital(String capital) {
+	this.capital = new BigDecimal(capital).setScale(2, RoundingMode.HALF_EVEN);
+	;
+    }
+
+    public BigDecimal getCapital() {
+	return capital;
+    }
 }

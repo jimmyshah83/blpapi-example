@@ -20,9 +20,9 @@ import org.supercsv.prefs.CsvPreference;
 
 @Component
 public class CsvUtils {
-    
-    private final String[] header = new String[] {"Ticker", "Percent Weight"};
-    
+
+    private final String[] header = new String[] { "Ticker", "Percent Weight" };
+
     @Autowired
     private DateUtils dateUtils;
 
@@ -38,18 +38,20 @@ public class CsvUtils {
 	}
 	return tickers;
     }
-    
+
     public void writeMapToCsv(String filePath, Map<String, Double> map) throws IOException {
-	try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(filePath+"actual-"+dateUtils.getCurrentDate()+".csv"), CsvPreference.STANDARD_PREFERENCE)) {
+	try (ICsvListWriter listWriter = new CsvListWriter(
+		new FileWriter(filePath + "actual-" + dateUtils.getCurrentDate() + ".csv"),
+		CsvPreference.STANDARD_PREFERENCE)) {
 	    listWriter.write(header[0], header[1]);
 	    for (Entry<String, Double> row : map.entrySet()) {
 		listWriter.write(row.getKey(), new BigDecimal(row.getValue()).setScale(2, RoundingMode.HALF_EVEN));
 	    }
 	}
     }
-    
+
     public Map<String, Double> readCsvToMap(String filePath) throws IOException {
-	try(Stream<String> lines = Files.lines(Paths.get(filePath))) {
+	try (Stream<String> lines = Files.lines(Paths.get(filePath))) {
 	    return lines.map(line -> line.split(",")).skip(1)
 		    .collect(Collectors.toMap(line -> line[0], line -> Double.valueOf(line[1])));
 	}

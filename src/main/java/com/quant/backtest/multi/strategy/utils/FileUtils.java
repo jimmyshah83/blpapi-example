@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FileUtils {
 
-	public boolean doesFileExists(String filePath) {
-		return new File(filePath).exists();
-	}
+    public boolean doesFileExists(String filePath) {
+	return new File(filePath).exists();
+    }
 }
