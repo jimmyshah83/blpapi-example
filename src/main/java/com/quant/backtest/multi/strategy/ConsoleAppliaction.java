@@ -1,7 +1,5 @@
 package com.quant.backtest.multi.strategy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -12,8 +10,6 @@ import com.quant.backtest.multi.strategy.processors.OutputGenerator;
 
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
-
-    private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
 
     @Autowired
     private OutputGenerator outputGenerator;
@@ -26,7 +22,6 @@ public class ConsoleAppliaction implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-	logger.info("**********************8 Starting Application *******************************");
 	outputGenerator.process();
     }
 }

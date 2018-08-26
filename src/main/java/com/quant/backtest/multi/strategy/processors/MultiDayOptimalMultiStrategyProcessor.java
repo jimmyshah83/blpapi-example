@@ -2,10 +2,8 @@ package com.quant.backtest.multi.strategy.processors;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +31,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private CsvUtils csvUtils;
 
     public Map<String, Double> process() {
-	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(),
-		inputPropertiesLoader.getFlag());
+	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(), inputPropertiesLoader.getFlag());
 	Double totalWeight = DEFAULT_DOUBLE;
 	for (Double strategyWeight : allStrategyWeights.values()) {
 	    totalWeight = totalWeight + strategyWeight;
@@ -46,24 +43,22 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    allTenDaysTicker.put(date, optimalMultiStrategyProcessor.process(allStrategyWeights, totalWeight, date));
 	}
 	Map<String, Double> finalAveragedTickers = new HashMap<>();
-	Set<String> duplicateTickers = new HashSet<>();
 	for (Map<String, Double> allTickers : allTenDaysTicker.values()) {
 	    for (Entry<String, Double> allTicker : allTickers.entrySet()) {
 		if (finalAveragedTickers.containsKey(allTicker.getKey())) {
-		    duplicateTickers.add(allTicker.getKey());
-		    finalAveragedTickers.put(allTicker.getKey(),
-			    finalAveragedTickers.get(allTicker.getKey()) + (allTicker.getValue()));
+		    finalAveragedTickers.put(allTicker.getKey(), finalAveragedTickers.get(allTicker.getKey()) + (allTicker.getValue()));
 		} else
 		    finalAveragedTickers.put(allTicker.getKey(), allTicker.getValue());
 	    }
 	}
-	for (String ticker : duplicateTickers) {
-	    finalAveragedTickers.put(ticker,
-		    finalAveragedTickers.get(ticker) / inputPropertiesLoader.getinputDateSize());
+	Map<String, Double> optimalPortfolio = new HashMap<>();
+	double numberOfDays = inputPropertiesLoader.getinputDateSize();
+	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
+	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), finalAveragedTickerEntry.getValue() / numberOfDays);
 	}
-	logger.info("Final set of tickers are: {}", finalAveragedTickers);
+	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {
-	    csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), finalAveragedTickers);
+	    csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), optimalPortfolio);
 	} catch (IOException e) {
 	    logger.error("Failed to write CSV with error {}", e.getMessage());
 	}

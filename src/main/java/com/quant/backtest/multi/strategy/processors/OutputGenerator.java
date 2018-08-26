@@ -48,8 +48,7 @@ public class OutputGenerator {
 	String filePath = "";
 	long decValue = 0;
 	while (!fileUtils.doesFileExists(filePath)) {
-	    filePath = inputPropertiesLoader.getOutputFilePath() + "actual-"
-		    + dateUtils.decrementCurrentDate(++decValue) + ".csv";
+	    filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.decrementCurrentDate(++decValue) + ".csv";
 	}
 	logger.info("Fetching Previous File from Path {}", filePath);
 	try {
@@ -65,6 +64,7 @@ public class OutputGenerator {
 		logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue.setScale(SCALE, ROUNDING_MODE));
 	    }
 	}
+	
 	for (Entry<String, Double> previousActual : previousActuals.entrySet()) {
 	    if (!currentActuals.containsKey(previousActual.getKey())) {
 		BigDecimal finalValue = deltaMultiplier.multiply(new BigDecimal(previousActual.getValue()));
@@ -73,14 +73,12 @@ public class OutputGenerator {
 	    }
 	    if (currentActuals.containsKey(previousActual.getKey())) {
 		BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(SCALE, ROUNDING_MODE);
-		BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(SCALE,
-			ROUNDING_MODE);
+		BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(SCALE, ROUNDING_MODE);
 		BigDecimal differenceVal = currentVal.subtract(previousVal);
 		BigDecimal deltaVal = inputPropertiesLoader.getDelta();
 		if (differenceVal.signum() == -1) {
 		    if (differenceVal.abs().compareTo(deltaVal) == 1) {
-			BigDecimal finalValue = deltaMultiplier.multiply(differenceVal.abs()).setScale(SCALE,
-				ROUNDING_MODE);
+			BigDecimal finalValue = deltaMultiplier.multiply(differenceVal.abs()).setScale(SCALE, ROUNDING_MODE);
 			logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		    }
 		} else if (differenceVal.compareTo(deltaVal) == 1) {
@@ -89,7 +87,5 @@ public class OutputGenerator {
 		}
 	    }
 	}
-
-	logger.info("**************** Application Ends ********************");
     }
 }

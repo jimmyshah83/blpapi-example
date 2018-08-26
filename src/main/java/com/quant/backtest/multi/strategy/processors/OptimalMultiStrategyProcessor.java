@@ -27,23 +27,22 @@ public class OptimalMultiStrategyProcessor {
     public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) {
 	Map<String, Set<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
-	    allStrategyTickers.put(strategyName, csvUtils.readBacktestedCsv(
-		    inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
+	    allStrategyTickers.put(strategyName, csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + "-" + date + ".csv"));
 	}
 
 	Map<String, Double> optimalWeightedStrategy = new HashMap<>();
 	for (Entry<String, Double> strategyWeight : allStrategyWeights.entrySet()) {
 	    if (DEFAULT_DOUBLE.equals(strategyWeight.getValue()))
 		continue;
-	    Double individualTickerWeightPercent = ((strategyWeight.getValue() / totalWeight) * 100.00d)
-		    / (allStrategyTickers.get(strategyWeight.getKey()).size());
-	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with ticers {}",
-		    individualTickerWeightPercent, strategyWeight.getKey(),
+	    /**
+	     * TODO: If count is < 3 then get the difference from 3 and add CASH as a ticker? 
+	     */
+	    Double individualTickerWeightPercent = ((strategyWeight.getValue() / totalWeight) * 100.00d) / (allStrategyTickers.get(strategyWeight.getKey()).size());
+	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with ticers {}", individualTickerWeightPercent, strategyWeight.getKey(),
 		    allStrategyTickers.get(strategyWeight.getKey()).size());
 	    for (String ticker : allStrategyTickers.get(strategyWeight.getKey())) {
 		if (optimalWeightedStrategy.containsKey(ticker))
-		    optimalWeightedStrategy.put(ticker,
-			    optimalWeightedStrategy.get(ticker) + individualTickerWeightPercent);
+		    optimalWeightedStrategy.put(ticker, optimalWeightedStrategy.get(ticker) + individualTickerWeightPercent);
 		else
 		    optimalWeightedStrategy.put(ticker, individualTickerWeightPercent);
 	    }
