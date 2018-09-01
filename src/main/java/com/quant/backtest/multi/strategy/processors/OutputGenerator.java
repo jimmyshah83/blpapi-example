@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.processors;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,7 +43,7 @@ public class OutputGenerator {
 	deltaMultiplier = inputPropertiesLoader.getCapital().divide(new BigDecimal("100"));
     }
 
-    public void process() {
+    public void process() throws FileNotFoundException {
 	Map<String, Double> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, Double> previousActuals = null;
 	String filePath = "";

@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.processors;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
     @Autowired
     private CsvUtils csvUtils;
 
-    public Map<String, Double> process() {
+    public Map<String, Double> process() throws FileNotFoundException {
 	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(), inputPropertiesLoader.getFlag());
 	Double totalWeight = DEFAULT_DOUBLE;
 	for (Double strategyWeight : allStrategyWeights.values()) {

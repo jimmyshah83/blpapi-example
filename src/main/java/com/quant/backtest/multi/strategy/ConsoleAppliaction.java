@@ -1,5 +1,9 @@
 package com.quant.backtest.multi.strategy;
 
+import java.io.FileNotFoundException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -10,6 +14,8 @@ import com.quant.backtest.multi.strategy.processors.OutputGenerator;
 
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
 
     @Autowired
     private OutputGenerator outputGenerator;
@@ -21,7 +27,13 @@ public class ConsoleAppliaction implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
-	outputGenerator.process();
+    public void run(String... args) {
+	try {
+	    outputGenerator.process();
+	} catch (FileNotFoundException e) {
+	    logger.error("------------- ERROR ------------- {}", e.getMessage());
+	    logger.error("------------- SHUTTING down application -------------");
+	    e.printStackTrace();
+	}
     }
 }
