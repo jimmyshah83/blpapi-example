@@ -45,8 +45,8 @@
 		</layout>
 	</appender>
 
-	<root level="DEBUG">
-		<appender-ref ref="InfoLog" />
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
 	</root>
  
 </configuration>

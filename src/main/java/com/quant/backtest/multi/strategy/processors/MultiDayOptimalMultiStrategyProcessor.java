@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
+import com.quant.backtest.multi.strategy.utils.DateUtils;
 
 @Component
 public class MultiDayOptimalMultiStrategyProcessor {
@@ -25,6 +26,8 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private InputCalculator inputCalculator;
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
+    @Autowired
+    private DateUtils dateUtils;
     @Autowired
     private OptimalMultiStrategyProcessor optimalMultiStrategyProcessor;
     @Autowired
@@ -39,7 +42,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	logger.info("Total Strategy Weight = {} ", totalWeight);
 
 	Map<String, Map<String, Double>> allTenDaysTicker = new HashMap<>();
-	for (String date : inputPropertiesLoader.getInputDate()) {
+	for (String date : dateUtils.getLastNDays(inputPropertiesLoader.getNumberOfDays())) {
 	    allTenDaysTicker.put(date, optimalMultiStrategyProcessor.process(allStrategyWeights, totalWeight, date));
 	}
 	Map<String, Double> finalAveragedTickers = new HashMap<>();
@@ -52,7 +55,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    }
 	}
 	Map<String, Double> optimalPortfolio = new HashMap<>();
-	double numberOfDays = inputPropertiesLoader.getinputDateSize();
+	double numberOfDays = 10;
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
 	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), finalAveragedTickerEntry.getValue() / numberOfDays);
 	}
