@@ -46,10 +46,9 @@ public class OutputGenerator {
     public void process() throws FileNotFoundException {
 	Map<String, Double> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, Double> previousActuals = null;
-	String filePath = "";
-	long decValue = 0;
-	while (!fileUtils.doesFileExists(filePath)) {
-	    filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.decrementCurrentDate(++decValue) + ".csv";
+	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
+	if (!fileUtils.doesFileExists(filePath)) {
+	    throw new FileNotFoundException("Cannot find file : " + filePath);
 	}
 	logger.info("Fetching Previous File from Path {}", filePath);
 	try {
