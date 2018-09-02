@@ -22,6 +22,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private static final Logger logger = LoggerFactory.getLogger(MultiDayOptimalMultiStrategyProcessor.class);
 
     private final Double DEFAULT_DOUBLE = 0.0d;
+    private final Double TOTAL_OPTIMAL = 100.0d;
 
     @Autowired
     private InputCalculator inputCalculator;
@@ -56,9 +57,15 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    }
 	}
 	Map<String, Double> optimalPortfolio = new HashMap<>();
-	double numberOfDays = 10;
+	double totalPercentOptimalPortfolio = DEFAULT_DOUBLE;
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), finalAveragedTickerEntry.getValue() / numberOfDays);
+	    double averagedVal = finalAveragedTickerEntry.getValue() / 10;
+	    totalPercentOptimalPortfolio+=averagedVal;
+	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), averagedVal);
+	}
+	if (totalPercentOptimalPortfolio < TOTAL_OPTIMAL) {
+	    optimalPortfolio.put("CASH", TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
+	    finalAveragedTickers.put("CASH", TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
 	}
 	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {

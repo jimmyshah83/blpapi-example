@@ -31,8 +31,8 @@ public class ConsoleAppliaction implements CommandLineRunner {
 	try {
 	    outputGenerator.process();
 	} catch (FileNotFoundException e) {
-	    logger.error("------------- ERROR ------------- {}", e.getMessage());
-	    logger.error("------------- SHUTTING down application -------------");
+	    logger.error("------------- ERROR RUNNING APPLICATION ------------- {}", e.getMessage());
+	    logger.error("------------- SHUTTING DOWN -------------");
 	    e.printStackTrace();
 	}
     }
