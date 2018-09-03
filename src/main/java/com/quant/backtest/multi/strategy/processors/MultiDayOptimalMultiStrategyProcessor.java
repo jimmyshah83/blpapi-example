@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
+import com.quant.backtest.multi.strategy.enums.StrategyEnums;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
@@ -64,8 +65,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), averagedVal);
 	}
 	if (totalPercentOptimalPortfolio < TOTAL_OPTIMAL) {
-	    optimalPortfolio.put("CASH", TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
-	    finalAveragedTickers.put("CASH", TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
+	    optimalPortfolio.put(StrategyEnums.CASH.toString(), TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
 	}
 	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {

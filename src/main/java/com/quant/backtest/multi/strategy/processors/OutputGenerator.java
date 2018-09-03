@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.quant.backtest.multi.strategy.enums.StrategyEnums;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
@@ -56,6 +57,9 @@ public class OutputGenerator {
 	} catch (IOException e) {
 	    logger.error("Error reading previous file {}", e);
 	    e.printStackTrace();
+	}
+	if (previousActuals.containsKey(StrategyEnums.CASH.toString())) {
+	    previousActuals.remove(StrategyEnums.CASH.toString());
 	}
 
 	for (Entry<String, Double> currentActual : currentActuals.entrySet()) {
