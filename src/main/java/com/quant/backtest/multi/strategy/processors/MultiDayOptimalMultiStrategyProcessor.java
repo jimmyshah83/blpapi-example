@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.processors;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
+import com.quant.backtest.multi.strategy.enums.StrategyEnums;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
+import com.quant.backtest.multi.strategy.utils.DateUtils;
 
 @Component
 public class MultiDayOptimalMultiStrategyProcessor {
@@ -20,17 +23,20 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private static final Logger logger = LoggerFactory.getLogger(MultiDayOptimalMultiStrategyProcessor.class);
 
     private final Double DEFAULT_DOUBLE = 0.0d;
+    private final Double TOTAL_OPTIMAL = 100.0d;
 
     @Autowired
     private InputCalculator inputCalculator;
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
+    private DateUtils dateUtils;
+    @Autowired
     private OptimalMultiStrategyProcessor optimalMultiStrategyProcessor;
     @Autowired
     private CsvUtils csvUtils;
 
-    public Map<String, Double> process() {
+    public Map<String, Double> process() throws FileNotFoundException {
 	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(), inputPropertiesLoader.getFlag());
 	Double totalWeight = DEFAULT_DOUBLE;
 	for (Double strategyWeight : allStrategyWeights.values()) {
@@ -39,7 +45,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	logger.info("Total Strategy Weight = {} ", totalWeight);
 
 	Map<String, Map<String, Double>> allTenDaysTicker = new HashMap<>();
-	for (String date : inputPropertiesLoader.getInputDate()) {
+	for (String date : dateUtils.getLastNDays(inputPropertiesLoader.getNumberOfDays())) {
 	    allTenDaysTicker.put(date, optimalMultiStrategyProcessor.process(allStrategyWeights, totalWeight, date));
 	}
 	Map<String, Double> finalAveragedTickers = new HashMap<>();
@@ -52,9 +58,14 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    }
 	}
 	Map<String, Double> optimalPortfolio = new HashMap<>();
-	double numberOfDays = inputPropertiesLoader.getinputDateSize();
+	double totalPercentOptimalPortfolio = DEFAULT_DOUBLE;
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), finalAveragedTickerEntry.getValue() / numberOfDays);
+	    double averagedVal = finalAveragedTickerEntry.getValue() / 10;
+	    totalPercentOptimalPortfolio+=averagedVal;
+	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), averagedVal);
+	}
+	if (totalPercentOptimalPortfolio < TOTAL_OPTIMAL) {
+	    optimalPortfolio.put(StrategyEnums.CASH.toString(), TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
 	}
 	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {

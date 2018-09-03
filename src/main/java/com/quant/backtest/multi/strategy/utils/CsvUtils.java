@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.utils;
 
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -26,7 +27,7 @@ public class CsvUtils {
     @Autowired
     private DateUtils dateUtils;
 
-    public Set<String> readBacktestedCsv(String filePath) {
+    public Set<String> readBacktestedCsv(String filePath) throws FileNotFoundException {
 	Set<String> tickers = null;
 	try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
 	    tickers = stream.skip(4).map(line -> {
@@ -34,7 +35,7 @@ public class CsvUtils {
 		return str[0];
 	    }).collect(Collectors.toSet());
 	} catch (IOException ioe) {
-	    ioe.printStackTrace();
+	    throw new FileNotFoundException("Cannot find file : " + filePath);
 	}
 	return tickers;
     }

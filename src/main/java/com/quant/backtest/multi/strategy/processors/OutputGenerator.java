@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.processors;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.quant.backtest.multi.strategy.enums.StrategyEnums;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
@@ -42,13 +44,12 @@ public class OutputGenerator {
 	deltaMultiplier = inputPropertiesLoader.getCapital().divide(new BigDecimal("100"));
     }
 
-    public void process() {
+    public void process() throws FileNotFoundException {
 	Map<String, Double> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, Double> previousActuals = null;
-	String filePath = "";
-	long decValue = 0;
-	while (!fileUtils.doesFileExists(filePath)) {
-	    filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.decrementCurrentDate(++decValue) + ".csv";
+	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
+	if (!fileUtils.doesFileExists(filePath)) {
+	    throw new FileNotFoundException("Cannot find file : " + filePath);
 	}
 	logger.info("Fetching Previous File from Path {}", filePath);
 	try {
@@ -56,6 +57,9 @@ public class OutputGenerator {
 	} catch (IOException e) {
 	    logger.error("Error reading previous file {}", e);
 	    e.printStackTrace();
+	}
+	if (previousActuals.containsKey(StrategyEnums.CASH.toString())) {
+	    previousActuals.remove(StrategyEnums.CASH.toString());
 	}
 
 	for (Entry<String, Double> currentActual : currentActuals.entrySet()) {
