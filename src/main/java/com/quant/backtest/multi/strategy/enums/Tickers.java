@@ -1,6 +1,6 @@
 package com.quant.backtest.multi.strategy.enums;
 
-public enum StrategyEnums {
+public enum Tickers {
 
     CASH;
 }

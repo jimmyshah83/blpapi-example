@@ -32,7 +32,7 @@ public class DateUtils {
     }
     
     public List<String> getLastNDays(int numberOfDays) {
-	LocalDate initialDate = LocalDate.now();
+	LocalDate initialDate = LocalDate.parse(getPreviousWorkingDay(), dateTimeFormatter);
 	List<String> lastNDays = new ArrayList<>();
 	LocalDate calculatedDate = null;
 	while (numberOfDays != 0) {

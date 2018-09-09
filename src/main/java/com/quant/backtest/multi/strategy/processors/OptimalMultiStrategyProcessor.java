@@ -2,15 +2,17 @@ package com.quant.backtest.multi.strategy.processors;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.quant.backtest.multi.strategy.enums.Tickers;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 
@@ -26,9 +28,12 @@ public class OptimalMultiStrategyProcessor {
     private CsvUtils csvUtils;
 
     public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) throws FileNotFoundException {
-	Map<String, Set<String>> allStrategyTickers = new HashMap<>();
+	Map<String, List<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
-	    allStrategyTickers.put(strategyName, csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv"));
+	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
+	    if (tickers.size() < 3)
+		IntStream.range(tickers.size(), 3).forEach(i -> tickers.add(Tickers.CASH.toString()));
+	    allStrategyTickers.put(strategyName, tickers);
 	}
 
 	Map<String, Double> optimalWeightedStrategy = new HashMap<>();

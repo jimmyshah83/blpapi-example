@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
-import com.quant.backtest.multi.strategy.enums.StrategyEnums;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
@@ -23,7 +22,6 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private static final Logger logger = LoggerFactory.getLogger(MultiDayOptimalMultiStrategyProcessor.class);
 
     private final Double DEFAULT_DOUBLE = 0.0d;
-    private final Double TOTAL_OPTIMAL = 100.0d;
 
     @Autowired
     private InputCalculator inputCalculator;
@@ -45,7 +43,8 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	logger.info("Total Strategy Weight = {} ", totalWeight);
 
 	Map<String, Map<String, Double>> allTenDaysTicker = new HashMap<>();
-	for (String date : dateUtils.getLastNDays(inputPropertiesLoader.getNumberOfDays())) {
+	int numberOfDays = inputPropertiesLoader.getNumberOfDays();
+	for (String date : dateUtils.getLastNDays(numberOfDays)) {
 	    allTenDaysTicker.put(date, optimalMultiStrategyProcessor.process(allStrategyWeights, totalWeight, date));
 	}
 	Map<String, Double> finalAveragedTickers = new HashMap<>();
@@ -58,14 +57,8 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    }
 	}
 	Map<String, Double> optimalPortfolio = new HashMap<>();
-	double totalPercentOptimalPortfolio = DEFAULT_DOUBLE;
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    double averagedVal = finalAveragedTickerEntry.getValue() / 10;
-	    totalPercentOptimalPortfolio+=averagedVal;
-	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), averagedVal);
-	}
-	if (totalPercentOptimalPortfolio < TOTAL_OPTIMAL) {
-	    optimalPortfolio.put(StrategyEnums.CASH.toString(), TOTAL_OPTIMAL-totalPercentOptimalPortfolio);
+	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), (finalAveragedTickerEntry.getValue() / numberOfDays));
 	}
 	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {
@@ -73,6 +66,6 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	} catch (IOException e) {
 	    logger.error("Failed to write CSV with error {}", e.getMessage());
 	}
-	return finalAveragedTickers;
+	return optimalPortfolio;
     }
 }

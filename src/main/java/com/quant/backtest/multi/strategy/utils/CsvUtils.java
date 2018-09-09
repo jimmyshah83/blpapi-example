@@ -7,9 +7,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,13 +27,13 @@ public class CsvUtils {
     @Autowired
     private DateUtils dateUtils;
 
-    public Set<String> readBacktestedCsv(String filePath) throws FileNotFoundException {
-	Set<String> tickers = null;
+    public List<String> readBacktestedCsv(String filePath) throws FileNotFoundException {
+	List<String> tickers = null;
 	try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
 	    tickers = stream.skip(4).map(line -> {
 		String[] str = line.split(",");
 		return str[0];
-	    }).collect(Collectors.toSet());
+	    }).collect(Collectors.toList());
 	} catch (IOException ioe) {
 	    throw new FileNotFoundException("Cannot find file : " + filePath);
 	}
