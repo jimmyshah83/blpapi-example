@@ -49,7 +49,7 @@ public class DateUtils {
     }
     
     public String getPreviousWorkingDay() {
-	LocalDate initialDate = LocalDate.now();
+	LocalDate initialDate = LocalDate.now().minusDays(1);
 	LocalDate calculatedDate = null;
 	String retVal = "";
 	int counter = 1;
