@@ -17,15 +17,15 @@ import org.springframework.stereotype.Component;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
+import com.quant.backtest.multi.strategy.utils.Defaults;
+import com.quant.backtest.multi.strategy.utils.EmailUtils;
 import com.quant.backtest.multi.strategy.utils.FileUtils;
 
 @Component
 public class OutputGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(OutputGenerator.class);
-    private final int SCALE = 2;
-    private final RoundingMode ROUNDING_MODE = RoundingMode.HALF_EVEN;
-    private BigDecimal deltaMultiplier;
+    private BigDecimal multiplier;
 
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
@@ -37,15 +37,17 @@ public class OutputGenerator {
     private DateUtils dateUtils;
     @Autowired
     private FileUtils fileUtils;
-
+    @Autowired
+    private EmailUtils emailUtils;
+    
     @PostConstruct
     public void init() {
-	deltaMultiplier = inputPropertiesLoader.getCapital().divide(new BigDecimal("100"));
+	multiplier = inputPropertiesLoader.getCapital().divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
     }
 
     public void process() throws FileNotFoundException {
-	Map<String, Double> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
-	Map<String, Double> previousActuals = null;
+	Map<String, BigDecimal> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
+	Map<String, BigDecimal> previousActuals = null;
 	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
 	    throw new FileNotFoundException("Cannot find file : " + filePath);
@@ -58,34 +60,40 @@ public class OutputGenerator {
 	    e.printStackTrace();
 	}
 
-	for (Entry<String, Double> currentActual : currentActuals.entrySet()) {
+	StringBuilder builder = new StringBuilder("Daily Details \n");
+	for (Entry<String, BigDecimal> currentActual : currentActuals.entrySet()) {
 	    if (!previousActuals.containsKey(currentActual.getKey())) {
-		BigDecimal finalValue = deltaMultiplier.multiply(new BigDecimal(currentActual.getValue()));
-		logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue.setScale(SCALE, ROUNDING_MODE));
+		BigDecimal finalValue = multiplier.multiply(currentActual.getValue());
+		builder.append("BUY " + currentActual.getKey() + " worth $" + finalValue + "\n");
+		logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue);
 	    }
 	}
 	
-	for (Entry<String, Double> previousActual : previousActuals.entrySet()) {
+	BigDecimal deltaVal = inputPropertiesLoader.getDelta();
+	for (Entry<String, BigDecimal> previousActual : previousActuals.entrySet()) {
 	    if (!currentActuals.containsKey(previousActual.getKey())) {
-		BigDecimal finalValue = deltaMultiplier.multiply(new BigDecimal(previousActual.getValue()));
-		logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue.setScale(SCALE, ROUNDING_MODE));
+		BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
+		builder.append("SELL " + previousActual.getKey() + " worth $" + finalValue + "\n");
+		logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		continue;
 	    }
 	    if (currentActuals.containsKey(previousActual.getKey())) {
-		BigDecimal previousVal = new BigDecimal(previousActual.getValue()).setScale(SCALE, ROUNDING_MODE);
-		BigDecimal currentVal = new BigDecimal(currentActuals.get(previousActual.getKey())).setScale(SCALE, ROUNDING_MODE);
+		BigDecimal previousVal = previousActual.getValue();
+		BigDecimal currentVal = currentActuals.get(previousActual.getKey());
 		BigDecimal differenceVal = currentVal.subtract(previousVal);
-		BigDecimal deltaVal = inputPropertiesLoader.getDelta();
 		if (differenceVal.signum() == -1) {
 		    if (differenceVal.abs().compareTo(deltaVal) == 1) {
-			BigDecimal finalValue = deltaMultiplier.multiply(differenceVal.abs()).setScale(SCALE, ROUNDING_MODE);
+			BigDecimal finalValue = multiplier.multiply(differenceVal.abs());
+			builder.append("SELL " + previousActual.getKey() + " worth $" + finalValue + "\n");
 			logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		    }
 		} else if (differenceVal.compareTo(deltaVal) == 1) {
-		    BigDecimal finalValue = deltaMultiplier.multiply(differenceVal).setScale(SCALE, ROUNDING_MODE);
+		    BigDecimal finalValue = multiplier.multiply(differenceVal);
+		    builder.append("BUY " + previousActual.getKey() + " worth $" + finalValue + "\n");
 		    logger.info("BUY {} worth ${}", previousActual.getKey(), finalValue);
 		}
 	    }
 	}
+	emailUtils.sendEmail(builder.toString());
     }
 }

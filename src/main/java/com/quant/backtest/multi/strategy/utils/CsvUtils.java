@@ -40,21 +40,21 @@ public class CsvUtils {
 	return tickers;
     }
 
-    public void writeMapToCsv(String filePath, Map<String, Double> map) throws IOException {
+    public void writeMapToCsv(String filePath, Map<String, BigDecimal> map) throws IOException {
 	try (ICsvListWriter listWriter = new CsvListWriter(
 		new FileWriter(filePath + "actual-" + dateUtils.getCurrentDate() + ".csv"),
 		CsvPreference.STANDARD_PREFERENCE)) {
 	    listWriter.write(header[0], header[1]);
-	    for (Entry<String, Double> row : map.entrySet()) {
-		listWriter.write(row.getKey(), new BigDecimal(row.getValue()).setScale(2, RoundingMode.HALF_EVEN));
+	    for (Entry<String, BigDecimal> row : map.entrySet()) {
+		listWriter.write(row.getKey(), row.getValue());
 	    }
 	}
     }
 
-    public Map<String, Double> readCsvToMap(String filePath) throws IOException {
+    public Map<String, BigDecimal> readCsvToMap(String filePath) throws IOException {
 	try (Stream<String> lines = Files.lines(Paths.get(filePath))) {
 	    return lines.map(line -> line.split(",")).skip(1)
-		    .collect(Collectors.toMap(line -> line[0], line -> Double.valueOf(line[1])));
+		    .collect(Collectors.toMap(line -> line[0], line -> new BigDecimal(line[1]).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN)));
 	}
     }
 }

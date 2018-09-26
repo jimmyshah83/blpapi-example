@@ -31,7 +31,7 @@ public class OptimalMultiStrategyProcessor {
 	Map<String, List<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
-	    if (tickers.size() < 3)
+	    if (inputPropertiesLoader.isUseCash() && tickers.size() < 3)
 		IntStream.range(tickers.size(), 3).forEach(i -> tickers.add(Tickers.CASH.toString()));
 	    allStrategyTickers.put(strategyName, tickers);
 	}

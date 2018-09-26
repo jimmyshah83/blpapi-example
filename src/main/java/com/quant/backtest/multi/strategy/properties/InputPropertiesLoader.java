@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.validation.annotation.Validated;
 
+import com.quant.backtest.multi.strategy.utils.Defaults;
+
 @Validated
 @Configuration
 @ConfigurationProperties
@@ -28,6 +30,8 @@ public class InputPropertiesLoader {
     private BigDecimal capital;
     @NonNull
     private int numberOfDays;
+    @NonNull
+    private boolean useCash;
 
     public void setSortino(Map<String, Double> sortino) {
 	this.sortino = sortino;
@@ -58,7 +62,7 @@ public class InputPropertiesLoader {
     }
 
     public void setDelta(String delta) {
-	this.delta = new BigDecimal(delta).setScale(2, RoundingMode.HALF_EVEN);
+	this.delta = new BigDecimal(delta).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
     }
 
     public String getFilePath() {
@@ -76,20 +80,23 @@ public class InputPropertiesLoader {
     public void setOutputFilePath(String outputFilePath) {
 	this.outputFilePath = outputFilePath;
     }
-
     public void setCapital(String capital) {
-	this.capital = new BigDecimal(capital).setScale(2, RoundingMode.HALF_EVEN);
+	this.capital = new BigDecimal(capital).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
     }
 
     public BigDecimal getCapital() {
 	return capital;
     }
-
     public int getNumberOfDays() {
         return numberOfDays;
     }
-
     public void setNumberOfDays(int numberOfDays) {
         this.numberOfDays = numberOfDays;
+    }
+    public boolean isUseCash() {
+        return useCash;
+    }
+    public void setUseCash(boolean useCash) {
+        this.useCash = useCash;
     }
 }
