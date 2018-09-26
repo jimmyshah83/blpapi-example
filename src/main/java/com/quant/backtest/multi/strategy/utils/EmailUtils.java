@@ -40,13 +40,13 @@ public class EmailUtils {
 	    MimeMessage msg = new MimeMessage(session);
 	    InternetAddress[] address = InternetAddress.parse(toEmail, true);
 	    msg.setRecipients(Message.RecipientType.TO, address);
-	    String timeStamp = new SimpleDateFormat("yyyymmdd hh-mm").format(new Date());
+	    String timeStamp = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date());
 	    msg.setSubject("Quant fund daily portfolio : " + timeStamp);
 	    msg.setSentDate(new Date());
 	    msg.setText(text);
 	    msg.setHeader("XPriority", "1");
 	    Transport.send(msg);
-	    logger.debug("Mail has been sent successfully with text {}", text);
+	    logger.debug("Mail has been sent successfully");
 	} catch (Exception e) {
 	    logger.error("Error sending email. Error {}", e);
 	}
