@@ -48,6 +48,12 @@
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.bloombergblp</groupId>
+			<artifactId>blpapi</artifactId>
+			<version>3.8.8-2</version>
+		</dependency>
 
 	</dependencies>
 

@@ -10,6 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.quant.backtest.multi.strategy.executors.BBGCrateOrder;
 import com.quant.backtest.multi.strategy.processors.OutputGenerator;
 
 @SpringBootApplication
@@ -19,6 +20,9 @@ public class ConsoleAppliaction implements CommandLineRunner {
 
     @Autowired
     private OutputGenerator outputGenerator;
+    
+    @Autowired
+    private BBGCrateOrder createOrder;
 
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
@@ -29,7 +33,9 @@ public class ConsoleAppliaction implements CommandLineRunner {
     @Override
     public void run(String... args) {
 	try {
-	    outputGenerator.process();
+	    createOrder.setDailyTransactions(outputGenerator.process());
+	    logger.debug("Executing Bloomberg Transaction");
+	    createOrder.placeOrder();
 	} catch (FileNotFoundException e) {
 	    logger.error("------------- ERROR RUNNING APPLICATION ------------- {}", e.getMessage());
 	    logger.error("------------- SHUTTING DOWN -------------");
