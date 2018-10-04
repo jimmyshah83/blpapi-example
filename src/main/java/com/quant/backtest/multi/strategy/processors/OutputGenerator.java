@@ -70,7 +70,7 @@ public class OutputGenerator {
 	    if (!previousActuals.containsKey(currentActual.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(currentActual.getValue());
 		dailyTransactions.add(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
-		builder.append(Side.BUY.getName() + currentActual.getKey() + " worth $" + finalValue + "\n");
+		builder.append(Side.BUY.getName() + " " + currentActual.getKey() + " worth $" + finalValue + "\n");
 		logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue);
 	    }
 	}
@@ -80,7 +80,7 @@ public class OutputGenerator {
 	    if (!currentActuals.containsKey(previousActual.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
 		dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-		builder.append(Side.SELL.getName() + previousActual.getKey() + " worth $" + finalValue + "\n");
+		builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
 		logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		continue;
 	    }
@@ -92,13 +92,13 @@ public class OutputGenerator {
 		    if (differenceVal.abs().compareTo(deltaVal) == 1) {
 			BigDecimal finalValue = multiplier.multiply(differenceVal.abs());
 			dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-			builder.append(Side.SELL.getName() + previousActual.getKey() + " worth $" + finalValue + "\n");
+			builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
 			logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		    }
 		} else if (differenceVal.compareTo(deltaVal) == 1) {
 		    BigDecimal finalValue = multiplier.multiply(differenceVal);
 		    dailyTransactions.add(new DailyTransaction(Side.BUY, previousActual.getKey(), finalValue));
-		    builder.append(Side.BUY.getName() + previousActual.getKey() + " worth $" + finalValue + "\n");
+		    builder.append(Side.BUY.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
 		    logger.info("BUY {} worth ${}", previousActual.getKey(), finalValue);
 		}
 	    }
