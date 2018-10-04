@@ -40,7 +40,7 @@ public class ConsoleAppliaction implements CommandLineRunner {
 	try {
 	    List<DailyTransaction> dailyTransactions = outputGenerator.process();
 	    emsxHandler.setDaiyTransactions(dailyTransactions);
-	    createOrder.placeOrder();
+//	    createOrder.placeOrder();
 	} catch (FileNotFoundException e) {
 	    logger.error("------------- ERROR RUNNING APPLICATION ------------- {}", e.getMessage());
 	    logger.error("------------- SHUTTING DOWN -------------");

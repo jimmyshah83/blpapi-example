@@ -56,13 +56,16 @@
 		<smtpHost>smtp.gmail.com</smtpHost>
 		<smtpPort>587</smtpPort>
 		<STARTTLS>true</STARTTLS>
+		<asynchronousSending>false</asynchronousSending>
 		
 		<username>northernmedallionfund@gmail.com</username>
 		<password>Medallion@123</password>
 		
 		<to>jimmyshah83@gmail.com</to>
 		<from>northernmedallionfund@gmail.com</from>
+		
 		<subject>Quant fund daily portfolio :: %logger{20} - %m</subject>
+		
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<pattern>%date %-5level %logger - %message%n</pattern>
 		</layout>
@@ -70,6 +73,7 @@
 
 	<root level="DEBUG">
 		<appender-ref ref="EMAIL" />
+		<appender-ref ref="STDOUT" />
 	</root>
 
 </configuration>
