@@ -1,6 +1,7 @@
 package com.quant.backtest.multi.strategy;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.quant.backtest.multi.strategy.executors.BBGCrateOrder;
+import com.quant.backtest.multi.strategy.executors.handlers.EMSXMessageHandler;
+import com.quant.backtest.multi.strategy.models.DailyTransaction;
 import com.quant.backtest.multi.strategy.processors.OutputGenerator;
 
 @SpringBootApplication
@@ -23,6 +26,8 @@ public class ConsoleAppliaction implements CommandLineRunner {
     
     @Autowired
     private BBGCrateOrder createOrder;
+    @Autowired
+    private EMSXMessageHandler emsxHandler;
 
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
@@ -33,8 +38,8 @@ public class ConsoleAppliaction implements CommandLineRunner {
     @Override
     public void run(String... args) {
 	try {
-	    createOrder.setDailyTransactions(outputGenerator.process());
-	    logger.debug("Executing Bloomberg Transaction");
+	    List<DailyTransaction> dailyTransactions = outputGenerator.process();
+	    emsxHandler.setDaiyTransactions(dailyTransactions);
 	    createOrder.placeOrder();
 	} catch (FileNotFoundException e) {
 	    logger.error("------------- ERROR RUNNING APPLICATION ------------- {}", e.getMessage());
