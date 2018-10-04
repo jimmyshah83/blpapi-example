@@ -71,7 +71,7 @@
 		</layout>
 	</appender>
 
-	<root level="DEBUG">
+	<root level="INFO">
 		<appender-ref ref="EMAIL" />
 		<appender-ref ref="STDOUT" />
 	</root>
