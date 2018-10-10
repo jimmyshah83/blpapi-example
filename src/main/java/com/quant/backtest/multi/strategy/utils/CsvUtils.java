@@ -42,7 +42,7 @@ public class CsvUtils {
 
     public void writeMapToCsv(String filePath, Map<String, BigDecimal> map) throws IOException {
 	try (ICsvListWriter listWriter = new CsvListWriter(
-		new FileWriter(filePath + "actual-" + dateUtils.getCurrentDate() + ".csv"),
+		new FileWriter(filePath + "optimal-" + dateUtils.getCurrentDate() + ".csv"),
 		CsvPreference.STANDARD_PREFERENCE)) {
 	    listWriter.write(header[0], header[1]);
 	    for (Entry<String, BigDecimal> row : map.entrySet()) {

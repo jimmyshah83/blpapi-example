@@ -40,16 +40,16 @@ public class ConsoleAppliaction implements CommandLineRunner {
 	    dailyTransactions = outputGenerator.process();
 	    createOrder.placeOrder(dailyTransactions);
 	} catch (FileNotFoundException e) {
-	    logger.error("FILE UNAVAILABLE {}", e);
+	    logger.error("FILE UNAVAILABLE --", e);
 	    e.printStackTrace();
 	} catch (IOException e) {
-	    logger.error("COULD not access path to file {}", e);
+	    logger.error("COULD not access path to file --", e);
 	    e.printStackTrace();
 	} catch (InterruptedException e) {
-	    logger.error("ERROR with BBG SESSION {}", e);
+	    logger.error("ERROR with BBG SESSION --", e);
 	    e.printStackTrace();
 	} catch (Exception e) {
-	    logger.error("ERROR with BBG CREATE ORDER {}", e);
+	    logger.error("ERROR with BBG CREATE ORDER --", e);
 	    e.printStackTrace();
 	}
 	    

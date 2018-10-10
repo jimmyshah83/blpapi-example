@@ -50,7 +50,7 @@ public class OutputGenerator {
     }
 
     public List<DailyTransaction> process() throws FileNotFoundException {
-	Map<String, BigDecimal> currentActuals = multiDayOptimalMultiStrategyProcessor.process();
+	Map<String, BigDecimal> currentOptimals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, BigDecimal> previousActuals = null;
 	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
@@ -66,7 +66,7 @@ public class OutputGenerator {
 
 	List<DailyTransaction> dailyTransactions = new ArrayList<>();
 	StringBuilder builder = new StringBuilder("Daily Details \n");
-	for (Entry<String, BigDecimal> currentActual : currentActuals.entrySet()) {
+	for (Entry<String, BigDecimal> currentActual : currentOptimals.entrySet()) {
 	    if (!previousActuals.containsKey(currentActual.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(currentActual.getValue());
 		dailyTransactions.add(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
@@ -77,16 +77,16 @@ public class OutputGenerator {
 	
 	BigDecimal deltaVal = inputPropertiesLoader.getDelta();
 	for (Entry<String, BigDecimal> previousActual : previousActuals.entrySet()) {
-	    if (!currentActuals.containsKey(previousActual.getKey())) {
+	    if (!currentOptimals.containsKey(previousActual.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
 		dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
 		builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
 		logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		continue;
 	    }
-	    if (currentActuals.containsKey(previousActual.getKey())) {
+	    if (currentOptimals.containsKey(previousActual.getKey())) {
 		BigDecimal previousVal = previousActual.getValue();
-		BigDecimal currentVal = currentActuals.get(previousActual.getKey());
+		BigDecimal currentVal = currentOptimals.get(previousActual.getKey());
 		BigDecimal differenceVal = currentVal.subtract(previousVal);
 		if (differenceVal.signum() == -1) {
 		    if (differenceVal.abs().compareTo(deltaVal) == 1) {
