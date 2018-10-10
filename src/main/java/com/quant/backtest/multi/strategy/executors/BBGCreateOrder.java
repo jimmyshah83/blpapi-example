@@ -66,8 +66,8 @@ public class BBGCreateOrder {
 			processMiscEvents(event, session);
 		    }
 		}
-
 	    }
+	    session.stop();
 	}
     }
 
@@ -105,7 +105,6 @@ public class BBGCreateOrder {
 		    String message = msg.getElementAsString("MESSAGE");
 		    logger.warn("EMSX_SEQUENCE: {} \tMESSAGE: {}", emsx_sequence, message);
 		}
-		session.stop();
 	    }
 	}
     }
