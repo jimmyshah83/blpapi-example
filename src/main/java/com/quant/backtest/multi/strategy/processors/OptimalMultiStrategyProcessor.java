@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.enums.Tickers;
@@ -26,13 +27,18 @@ public class OptimalMultiStrategyProcessor {
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private CsvUtils csvUtils;
+    @Value("${min.ticker.for.cash}")
+    private int minCashTickers;
 
     public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) throws FileNotFoundException {
 	Map<String, List<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
-	    if (inputPropertiesLoader.isUseCash() && tickers.size() < 3)
-		IntStream.range(tickers.size(), 3).forEach(i -> tickers.add(Tickers.CASH.toString()));
+	    if (inputPropertiesLoader.isUseCash() && tickers.size() < minCashTickers) {
+		IntStream.range(tickers.size(), minCashTickers).forEach(i -> tickers.add(Tickers.CASH.toString()));
+	    } else if (!inputPropertiesLoader.isUseCash() && tickers.size() == 0) {
+		tickers.add("CASH");
+	    }
 	    allStrategyTickers.put(strategyName, tickers);
 	}
 
