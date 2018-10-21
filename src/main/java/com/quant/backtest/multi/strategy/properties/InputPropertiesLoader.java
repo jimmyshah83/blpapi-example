@@ -27,8 +27,6 @@ public class InputPropertiesLoader {
     @NonNull
     private String outputFilePath;
     @NonNull
-    private BigDecimal capital;
-    @NonNull
     private int numberOfDays;
     @NonNull
     private boolean useCash;
@@ -79,13 +77,6 @@ public class InputPropertiesLoader {
 
     public void setOutputFilePath(String outputFilePath) {
 	this.outputFilePath = outputFilePath;
-    }
-    public void setCapital(String capital) {
-	this.capital = new BigDecimal(capital).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
-    }
-
-    public BigDecimal getCapital() {
-	return capital;
     }
     public int getNumberOfDays() {
         return numberOfDays;

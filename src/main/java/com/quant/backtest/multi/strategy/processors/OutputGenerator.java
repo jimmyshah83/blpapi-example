@@ -1,15 +1,12 @@
 package com.quant.backtest.multi.strategy.processors;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,64 +16,60 @@ import org.springframework.stereotype.Component;
 import com.quant.backtest.multi.strategy.enums.Side;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
-import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.Defaults;
 import com.quant.backtest.multi.strategy.utils.EmailUtils;
 import com.quant.backtest.multi.strategy.utils.FileUtils;
+import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 
 @Component
 public class OutputGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(OutputGenerator.class);
-    private BigDecimal multiplier;
 
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
-    private CsvUtils csvUtils;
+    private PortfolioUtils portfolioUtils;
     @Autowired
     private DateUtils dateUtils;
     @Autowired
     private FileUtils fileUtils;
     @Autowired
     private EmailUtils emailUtils;
-    
-    @PostConstruct
-    public void init() {
-	multiplier = inputPropertiesLoader.getCapital().divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
-    }
 
     public List<DailyTransaction> process() throws FileNotFoundException {
 	Map<String, BigDecimal> currentOptimals = multiDayOptimalMultiStrategyProcessor.process();
-	Map<String, BigDecimal> previousActuals = null;
+	Map<String, BigDecimal> actualPortfolio = null;
 	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
 	    throw new FileNotFoundException("Cannot find file : " + filePath);
 	}
 	logger.info("Fetching Previous File from Path {}", filePath);
 	try {
-	    previousActuals = csvUtils.readCsvToMap(filePath);
-	} catch (IOException e) {
+	    actualPortfolio = portfolioUtils.createActualPortfolio(filePath);
+	} catch (Exception e) {
 	    logger.error("Error reading previous file {}", e);
 	    e.printStackTrace();
 	}
-
+	
+	BigDecimal multiplier = new BigDecimal(portfolioUtils.getTotalMarketValueOfPortfolio()).divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
+	
 	List<DailyTransaction> dailyTransactions = new ArrayList<>();
 	StringBuilder builder = new StringBuilder("Daily Details \n");
 	for (Entry<String, BigDecimal> currentActual : currentOptimals.entrySet()) {
-	    if (!previousActuals.containsKey(currentActual.getKey())) {
-		BigDecimal finalValue = multiplier.multiply(currentActual.getValue());
+	    if (!actualPortfolio.containsKey(currentActual.getKey())) {
+		BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
 		dailyTransactions.add(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
 		builder.append(Side.BUY.getName() + " " + currentActual.getKey() + " worth $" + finalValue + "\n");
 		logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue);
 	    }
 	}
-	
+
 	BigDecimal deltaVal = inputPropertiesLoader.getDelta();
-	for (Entry<String, BigDecimal> previousActual : previousActuals.entrySet()) {
+	for (Entry<String, BigDecimal> previousActual : actualPortfolio.entrySet()) {
 	    if (!currentOptimals.containsKey(previousActual.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
 		dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));

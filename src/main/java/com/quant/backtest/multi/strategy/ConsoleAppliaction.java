@@ -38,7 +38,8 @@ public class ConsoleAppliaction implements CommandLineRunner {
 	List<DailyTransaction> dailyTransactions = null;
 	try {
 	    dailyTransactions = outputGenerator.process();
-	    createOrder.placeOrder(dailyTransactions);
+	    if (null != dailyTransactions)
+		createOrder.placeOrder(dailyTransactions);
 	} catch (FileNotFoundException e) {
 	    logger.error("FILE UNAVAILABLE --", e);
 	    e.printStackTrace();

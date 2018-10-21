@@ -18,6 +18,7 @@ import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.Defaults;
+import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 
 @Component
 public class MultiDayOptimalMultiStrategyProcessor {
@@ -36,11 +37,13 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private OptimalMultiStrategyProcessor optimalMultiStrategyProcessor;
     @Autowired
     private CsvUtils csvUtils;
+    @Autowired
+    private PortfolioUtils portfolioUtils;
 
     public Map<String, BigDecimal> process() throws FileNotFoundException {
 	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(), inputPropertiesLoader.getFlag());
 	Double totalWeight = DEFAULT_DOUBLE;
-	for (Double strategyWeight : allStrategyWeights.values()) {
+	for (Double strategyWeight : allStrategyWeights.values()) {  
 	    totalWeight = totalWeight + strategyWeight;
 	}
 	logger.info("Total Strategy Weight = {} ", totalWeight);
@@ -61,7 +64,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	}
 	Map<String, BigDecimal> optimalPortfolio = new HashMap<>();
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    optimalPortfolio.put(finalAveragedTickerEntry.getKey(), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
+	    optimalPortfolio.put(portfolioUtils.findBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 	}
 	logger.info("Final set of tickers are: {}", optimalPortfolio);
 	try {

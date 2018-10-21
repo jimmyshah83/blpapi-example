@@ -31,8 +31,10 @@ public class OptimalMultiStrategyProcessor {
     private int minCashTickers;
 
     public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) throws FileNotFoundException {
-	Map<String, List<String>> allStrategyTickers = new HashMap<>();
+ 	Map<String, List<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
+	    if (DEFAULT_DOUBLE.equals(allStrategyWeights.get(strategyName)))
+		continue;
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
 	    if (inputPropertiesLoader.isUseCash() && tickers.size() < minCashTickers) {
 		IntStream.range(tickers.size(), minCashTickers).forEach(i -> tickers.add(Tickers.CASH.toString()));
