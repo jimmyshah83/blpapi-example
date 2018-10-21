@@ -1,8 +1,9 @@
 package com.quant.backtest.multi.strategy.processors;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +23,14 @@ import com.quant.backtest.multi.strategy.utils.EmailUtils;
 import com.quant.backtest.multi.strategy.utils.FileUtils;
 import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 
+/**
+ * Processor that reads both Optimal and Actual portfolio's and identifies tickers for Bloomberg execution 
+ * @author jiviteshshah
+ */
 @Component
-public class OutputGenerator {
+public class ResultProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(OutputGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(ResultProcessor.class);
 
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
@@ -40,20 +45,22 @@ public class OutputGenerator {
     @Autowired
     private EmailUtils emailUtils;
 
-    public List<DailyTransaction> process() throws FileNotFoundException {
+    /**
+     * Combines the Optimal and Actual portfolio's to create a daily transaction.
+     * @return List of transactions to be sent to Bloomberg
+     * @throws IOException
+     * @throws ParseException
+     */
+    public List<DailyTransaction> process() throws IOException, ParseException {
 	Map<String, BigDecimal> currentOptimals = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, BigDecimal> actualPortfolio = null;
 	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
-	    throw new FileNotFoundException("Cannot find file : " + filePath);
+	    logger.warn("Actual portfolio does not exist. STOPPING execution");
+	    return null;
 	}
-	logger.info("Fetching Previous File from Path {}", filePath);
-	try {
-	    actualPortfolio = portfolioUtils.createActualPortfolio(filePath);
-	} catch (Exception e) {
-	    logger.error("Error reading previous file {}", e);
-	    e.printStackTrace();
-	}
+	logger.info("Fetching Actual portfolio from Path {}", filePath);
+	actualPortfolio = portfolioUtils.createActualPortfolio(filePath);
 	
 	BigDecimal multiplier = new BigDecimal(portfolioUtils.getTotalMarketValueOfPortfolio()).divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 	

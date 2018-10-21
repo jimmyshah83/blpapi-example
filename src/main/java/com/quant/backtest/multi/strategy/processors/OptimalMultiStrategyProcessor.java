@@ -17,6 +17,10 @@ import com.quant.backtest.multi.strategy.enums.Tickers;
 import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.CsvUtils;
 
+/**
+ * A single day Multi-strategy processor that combines all strategies for a particular day.
+ * @author jiviteshshah
+ */
 @Component
 public class OptimalMultiStrategyProcessor {
 
@@ -30,6 +34,14 @@ public class OptimalMultiStrategyProcessor {
     @Value("${min.ticker.for.cash}")
     private int minCashTickers;
 
+    /**
+     * Combines all strategies for a particular day.
+     * @param allStrategyWeights Weight of each strategy (flag * sortino ratio)
+     * @param totalWeight () Combined weight of all strategies
+     * @param date day for combining all strategies
+     * @return Optimal weighted strategy for that day.
+     * @throws FileNotFoundException
+     */
     public Map<String, Double> process(Map<String, Double> allStrategyWeights, Double totalWeight, String date) throws FileNotFoundException {
  	Map<String, List<String>> allStrategyTickers = new HashMap<>();
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
@@ -49,7 +61,7 @@ public class OptimalMultiStrategyProcessor {
 	    if (DEFAULT_DOUBLE.equals(strategyWeight.getValue()))
 		continue;
 	    Double individualTickerWeightPercent = ((strategyWeight.getValue() / totalWeight) * 100.00d) / (allStrategyTickers.get(strategyWeight.getKey()).size());
-	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with tickers {}", individualTickerWeightPercent, strategyWeight.getKey(),
+	    logger.info("Individual % weight {} for each ticker in evenly balanced startegy {} with {} tickers", individualTickerWeightPercent, strategyWeight.getKey(),
 		    allStrategyTickers.get(strategyWeight.getKey()).size());
 	    for (String ticker : allStrategyTickers.get(strategyWeight.getKey())) {
 		if (optimalWeightedStrategy.containsKey(ticker))

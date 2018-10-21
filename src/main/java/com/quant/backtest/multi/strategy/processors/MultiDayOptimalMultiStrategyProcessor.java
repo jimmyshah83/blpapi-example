@@ -1,6 +1,5 @@
 package com.quant.backtest.multi.strategy.processors;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,6 +19,11 @@ import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.Defaults;
 import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 
+/**
+ * A optimal multi-strategy processor that combines all strategies, will all the given days, to build an optimal portfolio.
+ * @see OptimalMultiStrategyProcessor
+ * @author jiviteshshah
+ */
 @Component
 public class MultiDayOptimalMultiStrategyProcessor {
 
@@ -40,13 +44,18 @@ public class MultiDayOptimalMultiStrategyProcessor {
     @Autowired
     private PortfolioUtils portfolioUtils;
 
-    public Map<String, BigDecimal> process() throws FileNotFoundException {
+    /**
+     * combines all strategies, will all the given days, to build an optimal portfolio
+     * @return Optimal portfolio
+     * @throws IOException
+     */
+    public Map<String, BigDecimal> process() throws IOException {
 	Map<String, Double> allStrategyWeights = inputCalculator.calculateWeights(inputPropertiesLoader.getSortino(), inputPropertiesLoader.getFlag());
 	Double totalWeight = DEFAULT_DOUBLE;
 	for (Double strategyWeight : allStrategyWeights.values()) {  
 	    totalWeight = totalWeight + strategyWeight;
 	}
-	logger.info("Total Strategy Weight = {} ", totalWeight);
+	logger.info("Total Weight for all strategies = {} ", totalWeight);
 
 	Map<String, Map<String, Double>> allTenDaysTicker = new HashMap<>();
 	int numberOfDays = inputPropertiesLoader.getNumberOfDays();
@@ -64,14 +73,10 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	}
 	Map<String, BigDecimal> optimalPortfolio = new HashMap<>();
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    optimalPortfolio.put(portfolioUtils.findBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
+	    optimalPortfolio.put(portfolioUtils.convertToBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 	}
-	logger.info("Final set of tickers are: {}", optimalPortfolio);
-	try {
-	    csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), optimalPortfolio);
-	} catch (IOException e) {
-	    logger.error("Failed to write CSV with error {}", e.getMessage());
-	}
+	logger.info("Final set of tickers for optimal portfolio: {}", optimalPortfolio);
+	csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), optimalPortfolio);
 	return optimalPortfolio;
     }
 }

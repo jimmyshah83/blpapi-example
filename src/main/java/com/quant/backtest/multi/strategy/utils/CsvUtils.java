@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,8 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.supercsv.cellprocessor.Optional;
@@ -33,12 +36,18 @@ import org.supercsv.prefs.CsvPreference;
 
 import com.quant.backtest.multi.strategy.enums.ActualPortfolioHeader;
 
+/**
+ * CSV utility class to read / write all CSV files
+ * @author jiviteshshah
+ */
 @Component
 public class CsvUtils {
+    
+    private static final Logger logger = LoggerFactory.getLogger(CsvUtils.class);
 
     @Autowired
     private DateUtils dateUtils;
-    private Double totalMarketCap;
+    private Double totalMarketVale;
     private final NumberFormat numberFormat = NumberFormat.getInstance();
     
     private final Map<String, CellProcessor> DESIRED_COLUMNS = new HashMap<>();
@@ -50,6 +59,12 @@ public class CsvUtils {
 	DESIRED_COLUMNS.put(ActualPortfolioHeader.MarketValue.getValue(), new Optional());
     }
 
+    /**
+     * Fetch Morning star back tested CSV.
+     * @param filePath Path to back tested CSV file.
+     * @return 
+     * @throws FileNotFoundException
+     */
     public List<String> readBacktestedCsv(String filePath) throws FileNotFoundException {
 	List<String> tickers = null;
 	try (Stream<String> stream = Files.lines(Paths.get(filePath))) {
@@ -63,6 +78,12 @@ public class CsvUtils {
 	return tickers;
     }
 
+    /**
+     * Write the optimal portfolio to CSV
+     * @param filePath Path where the optimal portfolio would be written.
+     * @param map Map that would be written as CSV body.
+     * @throws IOException
+     */
     public void writeMapToCsv(String filePath, Map<String, BigDecimal> map) throws IOException {
 	final String[] header = new String[] { "Ticker", "Percent Weight" };
 	try (ICsvListWriter listWriter = new CsvListWriter(new FileWriter(filePath + "optimal-" + dateUtils.getCurrentDate() + ".csv"), CsvPreference.STANDARD_PREFERENCE)) {
@@ -73,7 +94,14 @@ public class CsvUtils {
 	}
     }
     
-    public Set<Map<String, Object>> fetchActualPortfolioFromCsv(String filePath) throws Exception {
+    /**
+     * Fethc the actual portfolio into a Map with 3 columns Company, Ticker and Market Value and ignoring the rest.
+     * @param filePath Path to Actual portfolio
+     * @return The actual portfolio
+     * @throws IOException
+     * @throws ParseException
+     */
+    public Set<Map<String, Object>> fetchActualPortfolioFromCsv(String filePath) throws IOException, ParseException {
 	ICsvMapReader mapReader = null;
 	Map<String, Object> actualPortfolioRow;
 	Set<Map<String, Object>> actualPortfolioSet = new HashSet<>();
@@ -92,11 +120,11 @@ public class CsvUtils {
 	    while ((actualPortfolioRow = mapReader.read(header, processors)) != null) {
 //		Check to end the loop when we have the market Value
 		if (StringUtils.equalsIgnoreCase("Total", StringUtils.trim((String) actualPortfolioRow.get(ActualPortfolioHeader.Company.getValue())))) {
-		    totalMarketCap = numberFormat.parse(StringUtils.trim((String) actualPortfolioRow.get(ActualPortfolioHeader.MarketValue.getValue()))).doubleValue();
+		    totalMarketVale = numberFormat.parse(StringUtils.trim((String) actualPortfolioRow.get(ActualPortfolioHeader.MarketValue.getValue()))).doubleValue();
 		    break;
 		}
 		actualPortfolioSet.add(actualPortfolioRow);
-		System.out.println(String.format("lineNo=%s, rowNo=%s, autal Portfolio row=%s", mapReader.getLineNumber(), mapReader.getRowNumber(), actualPortfolioRow));
+		logger.debug("lineNo=%s, rowNo=%s, autal Portfolio row=%s", mapReader.getLineNumber(), mapReader.getRowNumber(), actualPortfolioRow);
 	    }
 	} finally {
 	    if (mapReader != null) {
@@ -106,8 +134,12 @@ public class CsvUtils {
 	return actualPortfolioSet;
     }
     
+    /**
+     * Get the total market value of Portfolio. If called prematurely or not available, a default of 100k would be returned.
+     * @return total market value of Portfolio
+     */
     public Double getTotalMarketValue() {
-	return totalMarketCap;
+	return java.util.Optional.ofNullable(totalMarketVale).orElse(100000d);
     }
     
 }

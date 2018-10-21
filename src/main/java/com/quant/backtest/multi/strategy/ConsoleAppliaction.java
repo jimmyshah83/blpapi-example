@@ -2,6 +2,8 @@ package com.quant.backtest.multi.strategy;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -14,15 +16,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.quant.backtest.multi.strategy.executors.BBGCreateOrder;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
-import com.quant.backtest.multi.strategy.processors.OutputGenerator;
+import com.quant.backtest.multi.strategy.processors.ResultProcessor;
 
+/**
+ * Main {@linkplain CommandLineRunner} responsible to start the application
+ */
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
     
     private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
 
     @Autowired
-    private OutputGenerator outputGenerator;
+    private ResultProcessor resultProcessor;
     
     @Autowired
     private BBGCreateOrder createOrder;
@@ -37,23 +42,26 @@ public class ConsoleAppliaction implements CommandLineRunner {
     public void run(String... args) {
 	List<DailyTransaction> dailyTransactions = null;
 	try {
-	    dailyTransactions = outputGenerator.process();
+	    dailyTransactions = resultProcessor.process();
 	    if (null != dailyTransactions)
 		createOrder.placeOrder(dailyTransactions);
+	    else
+		logger.info("No transactions recorded on {}", LocalDate.now());
 	} catch (FileNotFoundException e) {
-	    logger.error("FILE UNAVAILABLE --", e);
+	    logger.error("FILE UNAVAILABLE, error message: {}", e);
 	    e.printStackTrace();
 	} catch (IOException e) {
-	    logger.error("COULD not access path to file --", e);
+	    logger.error("COULD not access path to file, error message: {}", e);
 	    e.printStackTrace();
 	} catch (InterruptedException e) {
-	    logger.error("ERROR with BBG SESSION --", e);
+	    logger.error("ERROR establishing BBG SESSION, error message: {}", e);
+	    e.printStackTrace();
+	} catch (ParseException e) {
+	    logger.error("ERROR Reading CSV file, error message: {}", e);
 	    e.printStackTrace();
 	} catch (Exception e) {
-	    logger.error("ERROR with BBG CREATE ORDER --", e);
+	    logger.error("ERROR. Something went wrong with BBG create order, error message: {}", e);
 	    e.printStackTrace();
 	}
-	    
-	
     }
 }

@@ -1,5 +1,6 @@
 package com.quant.backtest.multi.strategy.executors;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,15 @@ import com.bloomberglp.blpapi.Session;
 import com.bloomberglp.blpapi.SessionOptions;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 
+import static com.quant.backtest.multi.strategy.enums.BloombergOrder.*;
+
+/**
+ * Creates a session with Bloomberg and places the order daily. It uses the
+ * desktop API, BLPAPI, hence the user needs to be logged in to Bloomberg at all
+ * times.
+ * 
+ * @author jiviteshshah
+ */
 @Component(value = "createOrder")
 public class BBGCreateOrder {
 
@@ -33,9 +43,23 @@ public class BBGCreateOrder {
     private int hostPort;
     @Value("${service.name}")
     private String serviceName;
+    @Value("${bloomberg.order.type}")
+    private String orderType;
+    @Value("${bloomberg.order.tif}")
+    private String tif;
+    @Value("${bloomberg.order.handInstruction}")
+    private String handInstruction;
 
-    public void placeOrder(List<DailyTransaction> dailyTransactions) throws Exception {
-	logger.debug("Starting bloomberg session");
+    /**
+     * Creates a session with Bloomberg and places the order daily
+     * 
+     * @param dailyTransactions list of transactions
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws Exception
+     */
+    public void placeOrder(List<DailyTransaction> dailyTransactions) throws IOException, InterruptedException, Exception {
+	logger.debug("Starting BLOOMBERG session");
 	Session session = createSession();
 	List<CorrelationID> correlationIDs = new ArrayList<>();
 	if (session.start() && session.openService(serviceName)) {
@@ -43,13 +67,12 @@ public class BBGCreateOrder {
 	    for (DailyTransaction dailyTransaction : dailyTransactions) {
 		logger.info("Processing Transaction {} ", dailyTransaction.toString());
 		Request request = service.createRequest("CreateOrder");
-		request.set("EMSX_TICKER", "IBM US Equity");
-		request.set("EMSX_AMOUNT", 1000);
-		request.set("EMSX_ORDER_TYPE", "MKT");
-		request.set("EMSX_TIF", "DAY");
-		request.set("EMSX_HAND_INSTRUCTION", "ANY");
-		request.set("EMSX_SIDE", "BUY");
-		request.set("EMSX_BROKER", "????????");
+		request.set(Ticker.getValue(), dailyTransaction.getTicker());
+		request.set(Amount.getValue(), dailyTransaction.getValue().doubleValue());
+		request.set(OrderType.getValue(), orderType);
+		request.set(Tif.getValue(), tif);
+		request.set(HandInstruction.getValue(), handInstruction);
+		request.set(Side.getValue(), dailyTransaction.getSide().getName());
 		CorrelationID correlationID = new CorrelationID();
 		correlationIDs.add(correlationID);
 		session.sendRequest(request, correlationID);
@@ -67,6 +90,7 @@ public class BBGCreateOrder {
 		    }
 		}
 	    }
+	    logger.debug("BLOOMBERG order placement completed.");
 	    session.stop();
 	}
     }
@@ -79,16 +103,15 @@ public class BBGCreateOrder {
     }
 
     private void processMiscEvents(Event event, Session session) throws Exception {
-	logger.info("Processing MISC EVENT {}", event.eventType().toString());
 	MessageIterator msgIter = event.messageIterator();
 	while (msgIter.hasNext()) {
 	    Message msg = msgIter.next();
-	    logger.debug("IGNORING MESSAGE = {}", msg);
+	    logger.debug("MISC Event {}. Ignoring message = {}", event.eventType().toString(), msg);
 	}
     }
 
     private void processResponse(Event event, Session session) throws Exception {
-	logger.info("Processing RESPOINSE EVENT {}", event.eventType().toString());
+	logger.info("Processing RESPOINSE Event {}", event.eventType().toString());
 	MessageIterator msgIter = event.messageIterator();
 	while (msgIter.hasNext()) {
 	    Message msg = msgIter.next();
