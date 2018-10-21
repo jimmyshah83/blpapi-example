@@ -14,7 +14,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.quant.backtest.multi.strategy.executors.BBGCreateOrder;
+import com.quant.backtest.multi.strategy.executors.BloombergCreateOrder;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 import com.quant.backtest.multi.strategy.processors.ResultProcessor;
 
@@ -30,7 +30,7 @@ public class ConsoleAppliaction implements CommandLineRunner {
     private ResultProcessor resultProcessor;
     
     @Autowired
-    private BBGCreateOrder createOrder;
+    private BloombergCreateOrder createOrder;
 
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);

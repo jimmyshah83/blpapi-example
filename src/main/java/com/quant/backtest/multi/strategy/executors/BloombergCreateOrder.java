@@ -1,7 +1,6 @@
 package com.quant.backtest.multi.strategy.executors;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -17,7 +16,7 @@ import com.bloomberglp.blpapi.Name;
 import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
-import com.bloomberglp.blpapi.SessionOptions;
+import com.quant.backtest.multi.strategy.executor.BloombergExecutor;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 
 import static com.quant.backtest.multi.strategy.enums.BloombergOrder.*;
@@ -30,9 +29,9 @@ import static com.quant.backtest.multi.strategy.enums.BloombergOrder.*;
  * @author jiviteshshah
  */
 @Component(value = "createOrder")
-public class BBGCreateOrder {
+public class BloombergCreateOrder extends BloombergExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(BBGCreateOrder.class);
+    private static final Logger logger = LoggerFactory.getLogger(BloombergCreateOrder.class);
 
     private static final Name ERROR_INFO = new Name("ErrorInfo");
     private static final Name CREATE_ORDER = new Name("CreateOrder");
@@ -60,8 +59,7 @@ public class BBGCreateOrder {
      */
     public void placeOrder(List<DailyTransaction> dailyTransactions) throws IOException, InterruptedException, Exception {
 	logger.debug("Starting BLOOMBERG session");
-	Session session = createSession();
-	List<CorrelationID> correlationIDs = new ArrayList<>();
+	Session session = super.createSession(hostName, hostPort);
 	if (session.start() && session.openService(serviceName)) {
 	    Service service = session.getService(serviceName);
 	    for (DailyTransaction dailyTransaction : dailyTransactions) {
@@ -73,9 +71,7 @@ public class BBGCreateOrder {
 		request.set(Tif.getValue(), tif);
 		request.set(HandInstruction.getValue(), handInstruction);
 		request.set(Side.getValue(), dailyTransaction.getSide().getName());
-		CorrelationID correlationID = new CorrelationID();
-		correlationIDs.add(correlationID);
-		session.sendRequest(request, correlationID);
+		session.sendRequest(request, new CorrelationID());
 		boolean continueLoop = true;
 		while (continueLoop) {
 		    Event event = session.nextEvent();
@@ -93,13 +89,6 @@ public class BBGCreateOrder {
 	    logger.debug("BLOOMBERG order placement completed.");
 	    session.stop();
 	}
-    }
-
-    private Session createSession() {
-	SessionOptions sessionOptions = new SessionOptions();
-	sessionOptions.setServerHost(hostName);
-	sessionOptions.setServerPort(hostPort);
-	return new Session(sessionOptions);
     }
 
     private void processMiscEvents(Event event, Session session) throws Exception {
