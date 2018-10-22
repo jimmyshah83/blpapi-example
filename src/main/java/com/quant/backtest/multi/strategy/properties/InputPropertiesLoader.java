@@ -21,8 +21,6 @@ public class InputPropertiesLoader {
     private Map<String, Integer> flag = new HashMap<>();
     private Map<String, String> strategy = new HashMap<>();
     @NonNull
-    private BigDecimal delta;
-    @NonNull
     private String filePath;
     @NonNull
     private String outputFilePath;
@@ -53,14 +51,6 @@ public class InputPropertiesLoader {
 
     public void setStrategy(Map<String, String> strategy) {
 	this.strategy = strategy;
-    }
-
-    public BigDecimal getDelta() {
-	return delta;
-    }
-
-    public void setDelta(String delta) {
-	this.delta = new BigDecimal(delta).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
     }
 
     public String getFilePath() {
