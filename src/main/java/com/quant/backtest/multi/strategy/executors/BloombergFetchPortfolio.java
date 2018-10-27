@@ -17,10 +17,11 @@ import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
 import com.quant.backtest.multi.strategy.executor.BloombergExecutor;
 
-@Component(value = "refData")
-public class BloombergReferenceData extends BloombergExecutor {
+@Deprecated
+@Component(value = "portfolioData")
+public class BloombergFetchPortfolio extends BloombergExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(BloombergReferenceData.class);
+    private static final Logger logger = LoggerFactory.getLogger(BloombergFetchPortfolio.class);
     
     private static final Name ERROR_INFO = new Name("ErrorInfo");
     private static final Name FETCH_PORTFOLIO = new Name("PortfolioDataRequest");
@@ -59,14 +60,6 @@ public class BloombergReferenceData extends BloombergExecutor {
 	    }
 	    logger.debug("BLOOMBERG Portfolio request completed.");
 	    session.stop();
-	}
-    }
-
-    private void processMiscEvents(Event event, Session session) throws Exception {
-	MessageIterator msgIter = event.messageIterator();
-	while (msgIter.hasNext()) {
-	    Message msg = msgIter.next();
-	    logger.debug("MISC Event {}. Ignoring message = {}", event.eventType().toString(), msg);
 	}
     }
 

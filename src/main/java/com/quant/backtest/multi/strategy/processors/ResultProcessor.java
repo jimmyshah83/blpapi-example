@@ -20,9 +20,9 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.quant.backtest.multi.strategy.cache.SimpleListBasedCache;
 import com.quant.backtest.multi.strategy.enums.Side;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
-import com.quant.backtest.multi.strategy.properties.InputPropertiesLoader;
 import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.Defaults;
 import com.quant.backtest.multi.strategy.utils.EmailUtils;
@@ -46,16 +46,19 @@ public class ResultProcessor {
     private String automationXValue;
     @Value("${default.delta}")
     private String defaultDelta;
+    @Value("${actual.portfolio.FilePath}")
+    private String actualPortfolioFilePath;
+    
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
-    @Autowired
-    private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private PortfolioUtils portfolioUtils;
     @Autowired
     private DateUtils dateUtils;
     @Autowired
     private FileUtils fileUtils;
+    @Autowired
+    private SimpleListBasedCache<DailyTransaction> listCache;
     @Autowired
     private EmailUtils emailUtils;
 
@@ -78,64 +81,58 @@ public class ResultProcessor {
      * @throws IOException
      * @throws ParseException
      */
-    public List<DailyTransaction> process() throws IOException, ParseException {
-	Map<String, BigDecimal> currentOptimals = multiDayOptimalMultiStrategyProcessor.process();
+    public Boolean process() throws IOException, ParseException {
+	Map<String, BigDecimal> ptimalPortfolio = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, BigDecimal> actualPortfolio = null;
-	String filePath = inputPropertiesLoader.getOutputFilePath() + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
+	String filePath = actualPortfolioFilePath + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
-	    logger.warn("Actual portfolio does not exist. STOPPING execution");
-	    return null;
+	    logger.error("Actual portfolio does not exist. STOPPING execution");
+	    return false;
 	}
 	logger.info("Fetching Actual portfolio from Path {}", filePath);
 	actualPortfolio = portfolioUtils.createActualPortfolio(filePath);
 
 	BigDecimal multiplier = new BigDecimal(portfolioUtils.getTotalMarketValueOfPortfolio()).divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 
-	List<DailyTransaction> dailyTransactions = null;
 	for (Double x : xList) {
-	    dailyTransactions = new ArrayList<>();
-	    Double deltaDouble = (100 / currentOptimals.size()) / x;
+	    Double deltaDouble = (100 / ptimalPortfolio.size()) / x;
 	    BigDecimal deltaVal = new BigDecimal(deltaDouble).setScale(1, RoundingMode.HALF_EVEN);
 
 	    StringBuilder builder = new StringBuilder("Daily Details with DELTA " + deltaVal.toString() + "\n\n");
-	    for (Entry<String, BigDecimal> currentActual : currentOptimals.entrySet()) {
+	    for (Entry<String, BigDecimal> currentActual : ptimalPortfolio.entrySet()) {
 		if (!actualPortfolio.containsKey(currentActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
-		    dailyTransactions.add(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
+		    listCache.cache(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
 		    builder.append(Side.BUY.getName() + " " + currentActual.getKey() + " worth $" + finalValue + "\n");
-		    logger.info("BUY {} worth ${}", currentActual.getKey(), finalValue);
 		}
 	    }
 
 	    for (Entry<String, BigDecimal> previousActual : actualPortfolio.entrySet()) {
-		if (!currentOptimals.containsKey(previousActual.getKey())) {
+		if (!ptimalPortfolio.containsKey(previousActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
-		    dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
+		    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
 		    builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
-		    logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 		    continue;
 		}
-		if (currentOptimals.containsKey(previousActual.getKey())) {
+		if (ptimalPortfolio.containsKey(previousActual.getKey())) {
 		    BigDecimal previousVal = previousActual.getValue();
-		    BigDecimal currentVal = currentOptimals.get(previousActual.getKey());
+		    BigDecimal currentVal = ptimalPortfolio.get(previousActual.getKey());
 		    BigDecimal differenceVal = currentVal.subtract(previousVal);
 		    if (differenceVal.signum() == -1) {
 			if (differenceVal.abs().compareTo(deltaVal) == 1) {
 			    BigDecimal finalValue = multiplier.multiply(differenceVal.abs());
-			    dailyTransactions.add(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
+			    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
 			    builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
-			    logger.info("SELL {} worth ${}", previousActual.getKey(), finalValue);
 			}
 		    } else if (differenceVal.compareTo(deltaVal) == 1) {
 			BigDecimal finalValue = multiplier.multiply(differenceVal);
-			dailyTransactions.add(new DailyTransaction(Side.BUY, previousActual.getKey(), finalValue));
+			listCache.cache(new DailyTransaction(Side.BUY, previousActual.getKey(), finalValue));
 			builder.append(Side.BUY.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
-			logger.info("BUY {} worth ${}", previousActual.getKey(), finalValue);
 		    }
 		}
 	    }
 	    emailUtils.sendEmail(builder.toString());
 	}
-	return dailyTransactions;
+	return true;
     }
 }

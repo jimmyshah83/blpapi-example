@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.calculators.InputCalculator;
@@ -30,6 +31,9 @@ public class MultiDayOptimalMultiStrategyProcessor {
     private static final Logger logger = LoggerFactory.getLogger(MultiDayOptimalMultiStrategyProcessor.class);
 
     private final Double DEFAULT_DOUBLE = 0.0d;
+    
+    @Value("${optimal.portfolio.FilePath}")
+    private String optimalPortfolioFilePath;
 
     @Autowired
     private InputCalculator inputCalculator;
@@ -76,7 +80,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	    optimalPortfolio.put(portfolioUtils.convertToBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 	}
 	logger.info("Final set of tickers for optimal portfolio: {}", optimalPortfolio);
-	csvUtils.writeMapToCsv(inputPropertiesLoader.getOutputFilePath(), optimalPortfolio);
+	csvUtils.writeMapToCsv(optimalPortfolioFilePath, optimalPortfolio);
 	return optimalPortfolio;
     }
 }

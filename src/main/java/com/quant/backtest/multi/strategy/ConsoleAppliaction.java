@@ -3,8 +3,6 @@ package com.quant.backtest.multi.strategy;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
-import java.time.LocalDate;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +13,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.quant.backtest.multi.strategy.executors.BloombergCreateOrder;
-import com.quant.backtest.multi.strategy.models.DailyTransaction;
 import com.quant.backtest.multi.strategy.processors.ResultProcessor;
 
 /**
@@ -23,12 +20,12 @@ import com.quant.backtest.multi.strategy.processors.ResultProcessor;
  */
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
 
     @Autowired
     private ResultProcessor resultProcessor;
-    
+
     @Autowired
     private BloombergCreateOrder createOrder;
 
@@ -40,13 +37,10 @@ public class ConsoleAppliaction implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-	List<DailyTransaction> dailyTransactions = null;
 	try {
-	    dailyTransactions = resultProcessor.process();
-	    if (null != dailyTransactions)
-		createOrder.placeOrder(dailyTransactions);
-	    else
-		logger.info("No transactions recorded on {}", LocalDate.now());
+	    Boolean resultStatus = resultProcessor.process();
+	    if (resultStatus)
+		createOrder.placeOrder();
 	} catch (FileNotFoundException e) {
 	    logger.error("FILE UNAVAILABLE, error message: {}", e);
 	    e.printStackTrace();

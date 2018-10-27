@@ -7,7 +7,11 @@ public enum BloombergOrder {
     OrderType("EMSX_ORDER_TYPE"),
     Tif("EMSX_TIF"),
     HandInstruction("EMSX_HAND_INSTRUCTION"),
-    Side("EMSX_SIDE");
+    Side("EMSX_SIDE"),
+    
+    Security("securities"),
+    Fields("fields"),
+    LastPrice("PX_LAST");
     
     private String value;
     

@@ -1,10 +1,11 @@
 package com.quant.backtest.multi.strategy.executors;
 
 import java.io.IOException;
-import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,8 @@ import com.bloomberglp.blpapi.Name;
 import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
+import com.quant.backtest.multi.strategy.cache.SimpleListBasedCache;
+import com.quant.backtest.multi.strategy.enums.Tickers;
 import com.quant.backtest.multi.strategy.executor.BloombergExecutor;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 
@@ -48,6 +51,11 @@ public class BloombergCreateOrder extends BloombergExecutor {
     private String tif;
     @Value("${bloomberg.order.handInstruction}")
     private String handInstruction;
+    
+    @Autowired
+    private BloombergFetchSecurityData securityData;
+    @Autowired
+    private SimpleListBasedCache<DailyTransaction> listCache;
 
     /**
      * Creates a session with Bloomberg and places the order daily
@@ -57,16 +65,18 @@ public class BloombergCreateOrder extends BloombergExecutor {
      * @throws InterruptedException
      * @throws Exception
      */
-    public void placeOrder(List<DailyTransaction> dailyTransactions) throws IOException, InterruptedException, Exception {
+    public void placeOrder() throws IOException, InterruptedException, Exception {
 	logger.debug("Starting BLOOMBERG session");
 	Session session = super.createSession(hostName, hostPort);
 	if (session.start() && session.openService(serviceName)) {
 	    Service service = session.getService(serviceName);
-	    for (DailyTransaction dailyTransaction : dailyTransactions) {
+	    for (DailyTransaction dailyTransaction : listCache.fetchCache()) {
+		if (StringUtils.equalsIgnoreCase(Tickers.CASH.name(), dailyTransaction.getTicker())) 
+		    continue;
 		logger.info("Processing Transaction {} ", dailyTransaction.toString());
-		Request request = service.createRequest("CreateOrder");
+		Request request = service.createRequest(CREATE_ORDER.toString());
 		request.set(Ticker.getValue(), dailyTransaction.getTicker());
-		request.set(Amount.getValue(), dailyTransaction.getValue().doubleValue());
+		request.set(Amount.getValue(), securityData.calculateQuantity(session, dailyTransaction));
 		request.set(OrderType.getValue(), orderType);
 		request.set(Tif.getValue(), tif);
 		request.set(HandInstruction.getValue(), handInstruction);
@@ -78,7 +88,7 @@ public class BloombergCreateOrder extends BloombergExecutor {
 		    switch (event.eventType().intValue()) {
 		    case Event.EventType.Constants.PARTIAL_RESPONSE:
 		    case Event.EventType.Constants.RESPONSE:
-			processResponse(event, session);
+			processResponse(event);
 			continueLoop = false;
 			break;
 		    default:
@@ -86,21 +96,13 @@ public class BloombergCreateOrder extends BloombergExecutor {
 		    }
 		}
 	    }
-	    logger.debug("BLOOMBERG order placement completed.");
+	    logger.debug("BLOOMBERG SESSION completed.");
 	    session.stop();
 	}
     }
 
-    private void processMiscEvents(Event event, Session session) throws Exception {
-	MessageIterator msgIter = event.messageIterator();
-	while (msgIter.hasNext()) {
-	    Message msg = msgIter.next();
-	    logger.debug("MISC Event {}. Ignoring message = {}", event.eventType().toString(), msg);
-	}
-    }
-
-    private void processResponse(Event event, Session session) throws Exception {
-	logger.info("Processing RESPOINSE Event {}", event.eventType().toString());
+    private void processResponse(Event event) throws Exception {
+	logger.debug("Processing RESPOINSE Event {}", event.eventType().toString());
 	MessageIterator msgIter = event.messageIterator();
 	while (msgIter.hasNext()) {
 	    Message msg = msgIter.next();
@@ -111,11 +113,11 @@ public class BloombergCreateOrder extends BloombergExecutor {
 		if (msg.messageType().equals(ERROR_INFO)) {
 		    Integer errorCode = msg.getElementAsInt32("ERROR_CODE");
 		    String errorMessage = msg.getElementAsString("ERROR_MESSAGE");
-		    logger.warn("ERROR CODE: {} \tERROR MESSAGE: {}", errorCode, errorMessage);
+		    logger.error("ERROR CODE: {} \tERROR MESSAGE: {}", errorCode, errorMessage);
 		} else if (msg.messageType().equals(CREATE_ORDER)) {
 		    Integer emsx_sequence = msg.getElementAsInt32("EMSX_SEQUENCE");
 		    String message = msg.getElementAsString("MESSAGE");
-		    logger.warn("EMSX_SEQUENCE: {} \tMESSAGE: {}", emsx_sequence, message);
+		    logger.debug("EMSX_SEQUENCE: {} \tMESSAGE: {}", emsx_sequence, message);
 		}
 	    }
 	}

@@ -47,14 +47,14 @@ public class PortfolioUtils {
 	Double totalMarketValue = csvUtils.getTotalMarketValue();
 	Map<String, BigDecimal> actualPortfolio = new HashMap<>();
 	for (Map<String, Object> actualPortfolioTicker : actualPortfolioTickers) {
-	    String portfolioMarketValue = (String) actualPortfolioTicker.get(ActualPortfolioHeader.MarketValue.getValue());
+	    String portfolioMarketValue = StringUtils.trim((String) actualPortfolioTicker.get(ActualPortfolioHeader.MarketValue.getValue()));
 	    BigDecimal value = null;
 	    if (StringUtils.isNotBlank(portfolioMarketValue)) {
 		Double portfolioTicker = (numberFormat.parse(portfolioMarketValue).doubleValue() / totalMarketValue) * 100;
 		value = new BigDecimal(portfolioTicker).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
 	    } else
 		value = new BigDecimal(0d).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
-	    actualPortfolio.put((String) actualPortfolioTicker.get(ActualPortfolioHeader.Ticker.getValue()), value);
+	    actualPortfolio.put(StringUtils.trim((String) actualPortfolioTicker.get(ActualPortfolioHeader.Ticker.getValue())), value);
 
 	}
 	return actualPortfolio;
