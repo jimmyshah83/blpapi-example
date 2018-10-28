@@ -38,6 +38,7 @@ public class BloombergCreateOrder extends BloombergExecutor {
 
     private static final Name ERROR_INFO = new Name("ErrorInfo");
     private static final Name CREATE_ORDER = new Name("CreateOrder");
+    private Long CORRELATION_START_ID = 1L;
 
     @Value("${service.host}")
     private String hostName;
@@ -66,14 +67,15 @@ public class BloombergCreateOrder extends BloombergExecutor {
      * @throws Exception
      */
     public void placeOrder() throws IOException, InterruptedException, Exception {
-	logger.debug("Starting BLOOMBERG session");
+	logger.info("Starting BLOOMBERG session");
 	Session session = super.createSession(hostName, hostPort);
 	if (session.start() && session.openService(serviceName)) {
 	    Service service = session.getService(serviceName);
 	    for (DailyTransaction dailyTransaction : listCache.fetchCache()) {
 		if (StringUtils.equalsIgnoreCase(Tickers.CASH.name(), dailyTransaction.getTicker())) 
 		    continue;
-		logger.info("Processing Transaction {} ", dailyTransaction.toString());
+		CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
+		logger.info("Processing Transaction {} with Request/Correlation ID {} ", dailyTransaction.toString(), correlationID);
 		Request request = service.createRequest(CREATE_ORDER.toString());
 		request.set(Ticker.getValue(), dailyTransaction.getTicker());
 		request.set(Amount.getValue(), securityData.calculateQuantity(session, dailyTransaction));
@@ -81,7 +83,7 @@ public class BloombergCreateOrder extends BloombergExecutor {
 		request.set(Tif.getValue(), tif);
 		request.set(HandInstruction.getValue(), handInstruction);
 		request.set(Side.getValue(), dailyTransaction.getSide().getName());
-		session.sendRequest(request, new CorrelationID());
+		session.sendRequest(request, correlationID);
 		boolean continueLoop = true;
 		while (continueLoop) {
 		    Event event = session.nextEvent();
@@ -96,28 +98,26 @@ public class BloombergCreateOrder extends BloombergExecutor {
 		    }
 		}
 	    }
-	    logger.debug("BLOOMBERG SESSION completed.");
+	    logger.info("BLOOMBERG SESSION completed.");
 	    session.stop();
 	}
     }
 
     private void processResponse(Event event) throws Exception {
-	logger.debug("Processing RESPOINSE Event {}", event.eventType().toString());
-	MessageIterator msgIter = event.messageIterator();
-	while (msgIter.hasNext()) {
-	    Message msg = msgIter.next();
-	    logger.debug("MESSAGE: {}", msg.toString());
-	    logger.info("CORRELATION ID: {}", msg.correlationID());
+	logger.debug("Processing RESPONSE Event {}", event.eventType().toString());
+	MessageIterator messagegIterator = event.messageIterator();
+	while (messagegIterator.hasNext()) {
+	    Message message = messagegIterator.next();
+	    logger.info("MESSAGE = {} for CORRELATION ID = {}", message.toString(), message.correlationID());
 	    if (event.eventType() == Event.EventType.RESPONSE) {
-		logger.info("Message Type = {}", msg.messageType());
-		if (msg.messageType().equals(ERROR_INFO)) {
-		    Integer errorCode = msg.getElementAsInt32("ERROR_CODE");
-		    String errorMessage = msg.getElementAsString("ERROR_MESSAGE");
+		logger.info("Message Type = {}", message.messageType());
+		if (message.messageType().equals(ERROR_INFO)) {
+		    Integer errorCode = message.getElementAsInt32("ERROR_CODE");
+		    String errorMessage = message.getElementAsString("ERROR_MESSAGE");
 		    logger.error("ERROR CODE: {} \tERROR MESSAGE: {}", errorCode, errorMessage);
-		} else if (msg.messageType().equals(CREATE_ORDER)) {
-		    Integer emsx_sequence = msg.getElementAsInt32("EMSX_SEQUENCE");
-		    String message = msg.getElementAsString("MESSAGE");
-		    logger.debug("EMSX_SEQUENCE: {} \tMESSAGE: {}", emsx_sequence, message);
+		} else if (message.messageType().equals(CREATE_ORDER)) {
+		    Integer emsx_sequence = message.getElementAsInt32("EMSX_SEQUENCE");
+		    logger.info("EMSX_SEQUENCE: {} \tMESSAGE: {}", emsx_sequence, message.getElementAsString("MESSAGE"));
 		}
 	    }
 	}

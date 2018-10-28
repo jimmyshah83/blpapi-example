@@ -10,6 +10,7 @@ import com.bloomberglp.blpapi.Element;
 import com.bloomberglp.blpapi.Event;
 import com.bloomberglp.blpapi.Message;
 import com.bloomberglp.blpapi.MessageIterator;
+import com.bloomberglp.blpapi.Name;
 import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
@@ -23,20 +24,26 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
     
     private static final Logger logger = LoggerFactory.getLogger(BloombergFetchSecurityData.class);
 
+    private static final Name REF_DATA = new Name("ReferenceDataRequest");
+    private Long CORRELATION_START_ID = 1000L;
+    private final int DEFAULT_QTY = 1;
+    
     @Value("${refdata.service.name}")
     private String serviceName;
 
     public int calculateQuantity(Session session, DailyTransaction dailyTransaction) throws Exception {
-	int quantity = 1;
-	Service refDataSvc = session.getService("//blp/refdata");
+	int quantity = DEFAULT_QTY;
+	Service refDataSvc = session.getService(serviceName);
 	if (refDataSvc == null) {
-	    logger.error("Invalud Service");
+	    logger.error("Invalid Service. Returning default Quantity {}", quantity);
 	    return quantity;
 	}
-	Request request = refDataSvc.createRequest("ReferenceDataRequest");
+	CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
+	Request request = refDataSvc.createRequest(REF_DATA.toString());
 	request.append(Security.getValue(), dailyTransaction.getTicker());
 	request.append(Fields.getValue(), LastPrice.getValue());
-	session.sendRequest(request, new CorrelationID());
+	logger.info("Sending REF DATA request with correlation ID = {}", correlationID);
+	session.sendRequest(request, correlationID);
 	boolean continueLoop = true;
 	while (continueLoop) {
 	    Event event = session.nextEvent();
@@ -54,11 +61,10 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
     }
     
     private int processResponse(Event event, DailyTransaction dailyTransaction) throws Exception {
-	MessageIterator msgIter = event.messageIterator();
-	while (msgIter.hasNext()) {
-	    Message message = msgIter.next();
-	    logger.debug("MESSAGE: {}", message.toString());
-	    logger.info("CORRELATION ID: {}", message.correlationID());
+	MessageIterator messageIterator = event.messageIterator();
+	while (messageIterator.hasNext()) {
+	    Message message = messageIterator.next();
+	    logger.info("MESSAGE = {} for CORRELATION ID = {}", message.toString(), message.correlationID());
 	    Element elmSecurityDataArray = message.getElement("securityData");
 	    for (int valueIndex = 0; valueIndex < elmSecurityDataArray.numValues(); valueIndex++) {
 		Element elmSecurityData = elmSecurityDataArray.getValueAsElement(valueIndex);
@@ -68,48 +74,29 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
 		    Element elmFieldErrors = elmSecurityData.getElement("fieldExceptions");
 		    for (int errorIndex = 0; errorIndex < elmFieldErrors.numValues(); errorIndex++) {
 			Element fieldError = elmFieldErrors.getValueAsElement(errorIndex);
-			String fieldId = fieldError.getElementAsString("fieldId");
-
 			Element errorInfo = fieldError.getElement("errorInfo");
-			String source = errorInfo.getElementAsString("source");
 			int code = errorInfo.getElementAsInt32("code");
-			String category = errorInfo.getElementAsString("category");
 			String strMessage = errorInfo.getElementAsString("message");
 			String subCategory = errorInfo.getElementAsString("subcategory");
-
-			System.err.println();
-			System.err.println();
-			System.err.println("\tfield error: " + security);
-			System.err.println(String.format("\tfieldId = %s", fieldId));
-			System.err.println(String.format("\tsource = %s", source));
-			System.err.println(String.format("\tcode = %s", code));
-			System.err.println(String.format("\tcategory = %s", category));
-			System.err.println(String.format("\terrorMessage = %s", strMessage));
-			System.err.println(String.format("\tsubCategory = %s", subCategory));
+			logger.error("REF DATA request has Field Exception for security {} with error code = {}, category = {} and error message ={}", security, code, subCategory, strMessage);
 		    }
 		} 
 		boolean isSecurityError = elmSecurityData.hasElement("securityError", true);
 		if (isSecurityError) {
 		    Element secError = elmSecurityData.getElement("securityError");
-		    String source = secError.getElementAsString("source");
 		    int code = secError.getElementAsInt32("code");
-		    String category = secError.getElementAsString("category");
 		    String errorMessage = secError.getElementAsString("message");
 		    String subCategory = secError.getElementAsString("subcategory");
-
-		    System.err.println("security error");
-		    System.err.println(String.format("source = %s", source));
-		    System.err.println(String.format("code = %s", code));
-		    System.err.println(String.format("category = %s", category));
-		    System.err.println(String.format("errorMessage = %s", errorMessage));
-		    System.err.println(String.format("subCategory = %s", subCategory));
+		    logger.error("REF DATA request has Security Error for security {} with error code = {}, category = {} and error message ={}", security, code, subCategory, errorMessage);
 		} else {
 		    Element elmFieldData = elmSecurityData.getElement("fieldData");
-		    Double quantity = dailyTransaction.getValue().doubleValue() / elmFieldData.getElementAsFloat64("PX_LAST");
+		    double lastPrice = elmFieldData.getElementAsFloat64("PX_LAST");
+		    Double quantity = dailyTransaction.getValue().doubleValue() / lastPrice;
+		    logger.info("Fetched Last Price = {} for Security {}. Returning Quantity = {}", lastPrice, security, quantity);
 		    return quantity.intValue();
 		}
 	    }
 	}
-	return 1;
+	return DEFAULT_QTY;
     }
 }
