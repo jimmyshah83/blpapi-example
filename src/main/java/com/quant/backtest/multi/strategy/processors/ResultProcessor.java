@@ -82,7 +82,7 @@ public class ResultProcessor {
      * @throws ParseException
      */
     public Boolean process() throws IOException, ParseException {
-	Map<String, BigDecimal> ptimalPortfolio = multiDayOptimalMultiStrategyProcessor.process();
+	Map<String, BigDecimal> optimalPortfolio = multiDayOptimalMultiStrategyProcessor.process();
 	Map<String, BigDecimal> actualPortfolio = null;
 	String filePath = actualPortfolioFilePath + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
 	if (!fileUtils.doesFileExists(filePath)) {
@@ -95,11 +95,11 @@ public class ResultProcessor {
 	BigDecimal multiplier = new BigDecimal(portfolioUtils.getTotalMarketValueOfPortfolio()).divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
 
 	for (Double x : xList) {
-	    Double deltaDouble = (100 / ptimalPortfolio.size()) / x;
+	    Double deltaDouble = (100 / optimalPortfolio.size()) / x;
 	    BigDecimal deltaVal = new BigDecimal(deltaDouble).setScale(1, RoundingMode.HALF_EVEN);
 
 	    StringBuilder builder = new StringBuilder("Daily Details with DELTA " + deltaVal.toString() + "\n\n");
-	    for (Entry<String, BigDecimal> currentActual : ptimalPortfolio.entrySet()) {
+	    for (Entry<String, BigDecimal> currentActual : optimalPortfolio.entrySet()) {
 		if (!actualPortfolio.containsKey(currentActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
 		    listCache.cache(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
@@ -108,15 +108,15 @@ public class ResultProcessor {
 	    }
 
 	    for (Entry<String, BigDecimal> previousActual : actualPortfolio.entrySet()) {
-		if (!ptimalPortfolio.containsKey(previousActual.getKey())) {
+		if (!optimalPortfolio.containsKey(previousActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
 		    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
 		    builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
 		    continue;
 		}
-		if (ptimalPortfolio.containsKey(previousActual.getKey())) {
+		if (optimalPortfolio.containsKey(previousActual.getKey())) {
 		    BigDecimal previousVal = previousActual.getValue();
-		    BigDecimal currentVal = ptimalPortfolio.get(previousActual.getKey());
+		    BigDecimal currentVal = optimalPortfolio.get(previousActual.getKey());
 		    BigDecimal differenceVal = currentVal.subtract(previousVal);
 		    if (differenceVal.signum() == -1) {
 			if (differenceVal.abs().compareTo(deltaVal) == 1) {
