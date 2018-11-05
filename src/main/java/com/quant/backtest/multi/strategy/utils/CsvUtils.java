@@ -95,7 +95,7 @@ public class CsvUtils {
     }
     
     /**
-     * Fethc the actual portfolio into a Map with 3 columns Company, Ticker and Market Value and ignoring the rest.
+     * Fetch the actual portfolio, using super csv, into a Map with 3 columns. Company, Ticker and Market Value and ignoring the rest.
      * @param filePath Path to Actual portfolio
      * @return The actual portfolio
      * @throws IOException
