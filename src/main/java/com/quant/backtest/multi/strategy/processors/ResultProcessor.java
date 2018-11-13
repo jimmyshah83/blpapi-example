@@ -42,7 +42,7 @@ public class ResultProcessor {
 
     private List<Double> xList;
 
-    @Value("${X.delta}")
+    @Value("${delta.divider}")
     private String automationXValue;
     @Value("${default.delta}")
     private String defaultDelta;
