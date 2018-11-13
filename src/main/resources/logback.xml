@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <appender name="InfoLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	<appender name="InfoLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>${log.dir}/debug/multi-strategy-backtest.debug</File>
 		<encoder>
 			<pattern>%date %.-3level [%-24.24thread] %-35.35logger{35} - %message%n</pattern>
@@ -11,9 +11,11 @@
 		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<maxIndex>10</maxIndex>
-			<FileNamePattern>${log.dir}/debug/multi-strategy-backtest.debug.%i</FileNamePattern>
+			<FileNamePattern>${log.dir}/debug/multi-strategy-backtest.debug.%i
+			</FileNamePattern>
 		</rollingPolicy>
-		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
 			<MaxFileSize>250MB</MaxFileSize>
 		</triggeringPolicy>
 	</appender>
@@ -28,15 +30,14 @@
 		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<maxIndex>10</maxIndex>
-			<FileNamePattern>${log.dir}/error/multi-strategy-backtest.error.%i
-			</FileNamePattern>
+			<FileNamePattern>${log.dir}/error/multi-strategy-backtest.error.%i</FileNamePattern>
 		</rollingPolicy>
-		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
 			<MaxFileSize>100MB</MaxFileSize>
 		</triggeringPolicy>
 	</appender>
-	
-	<!-- Local -->
+
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<Pattern>
@@ -45,8 +46,28 @@
 		</layout>
 	</appender>
 
+	<appender name="EMAIL" class="ch.qos.logback.classic.net.SMTPAppender">
+		<smtpHost>smtp.gmail.com</smtpHost>
+		<smtpPort>587</smtpPort>
+		<STARTTLS>true</STARTTLS>
+		<asynchronousSending>false</asynchronousSending>
+		
+		<username>northernmedallionfund@gmail.com</username>
+		<password>Medallion@123</password>
+		
+		<to>jimmyshah83@gmail.com</to>
+		<from>northernmedallionfund@gmail.com</from>
+		
+		<subject>Quant fund daily portfolio :: %logger{20} - %m</subject>
+		
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%date %-5level %logger - %message%n</pattern>
+		</layout>
+	</appender>
+
 	<root level="INFO">
+		<appender-ref ref="EMAIL" />
 		<appender-ref ref="STDOUT" />
 	</root>
- 
+
 </configuration>

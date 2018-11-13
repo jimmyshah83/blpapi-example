@@ -1,24 +1,36 @@
 package com.quant.backtest.multi.strategy;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.text.ParseException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.quant.backtest.multi.strategy.processors.OutputGenerator;
+import com.quant.backtest.multi.strategy.executors.BloombergCreateOrder;
+import com.quant.backtest.multi.strategy.processors.ResultProcessor;
 
+/**
+ * Main {@linkplain CommandLineRunner} responsible to start the application
+ */
 @SpringBootApplication
 public class ConsoleAppliaction implements CommandLineRunner {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(ConsoleAppliaction.class);
 
     @Autowired
-    private OutputGenerator outputGenerator;
+    private ResultProcessor resultProcessor;
+    @Autowired
+    private BloombergCreateOrder createOrder;
+    
+    @Value("${bloomberg.create.order.flag}")
+    private boolean doCreateOrder;
 
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
@@ -29,10 +41,25 @@ public class ConsoleAppliaction implements CommandLineRunner {
     @Override
     public void run(String... args) {
 	try {
-	    outputGenerator.process();
+	    Boolean resultStatus = resultProcessor.process();
+	    if (doCreateOrder && resultStatus)
+		createOrder.placeOrder();
+//	    Below is not an error but a way to send email log to Jimmy.
+	    logger.error("EXECUTION COMPLETED.");
 	} catch (FileNotFoundException e) {
-	    logger.error("------------- ERROR RUNNING APPLICATION ------------- {}", e.getMessage());
-	    logger.error("------------- SHUTTING DOWN -------------");
+	    logger.error("FILE UNAVAILABLE, error message: {}", e);
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    logger.error("COULD not access path to file, error message: {}", e);
+	    e.printStackTrace();
+	} catch (InterruptedException e) {
+	    logger.error("ERROR establishing BBG SESSION, error message: {}", e);
+	    e.printStackTrace();
+	} catch (ParseException e) {
+	    logger.error("ERROR Reading CSV file, error message: {}", e);
+	    e.printStackTrace();
+	} catch (Exception e) {
+	    logger.error("ERROR. Something went wrong with BBG create order, error message: {}", e);
 	    e.printStackTrace();
 	}
     }
