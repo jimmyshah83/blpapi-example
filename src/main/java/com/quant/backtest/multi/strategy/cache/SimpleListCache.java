@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component(value = "listCache")
-public class SimpleListBasedCache<T> {
+public class SimpleListCache<T> {
 
     private List<T> cache = new ArrayList<>();
     

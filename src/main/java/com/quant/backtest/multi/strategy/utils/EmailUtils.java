@@ -1,6 +1,6 @@
 package com.quant.backtest.multi.strategy.utils;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Properties;
 
@@ -13,8 +13,11 @@ import javax.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.quant.backtest.multi.strategy.cache.EmailCache;
 
 @Component
 public class EmailUtils {
@@ -23,8 +26,11 @@ public class EmailUtils {
     
     @Value("${email.to}")
     private String toEmail;
+    
+    @Autowired
+    private EmailCache emailCache;
 
-    public void sendEmail(String text) {
+    public void sendEmail() {
 	try {
 	    Properties props = new Properties();
 	    props.put("mail.smtp.host", "true");
@@ -40,10 +46,9 @@ public class EmailUtils {
 	    MimeMessage msg = new MimeMessage(session);
 	    InternetAddress[] address = InternetAddress.parse(toEmail, true);
 	    msg.setRecipients(Message.RecipientType.TO, address);
-	    String timeStamp = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date());
-	    msg.setSubject("Quant fund daily portfolio : " + timeStamp);
+	    msg.setSubject("DKFC quant managed account - " + LocalDate.now());
 	    msg.setSentDate(new Date());
-	    msg.setText(text);
+	    msg.setText(emailCache.getValue());
 	    msg.setHeader("XPriority", "1");
 	    Transport.send(msg);
 	    logger.debug("Mail has been sent successfully");

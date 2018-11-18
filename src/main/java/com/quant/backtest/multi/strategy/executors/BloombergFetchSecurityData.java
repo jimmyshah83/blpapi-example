@@ -2,6 +2,7 @@ package com.quant.backtest.multi.strategy.executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,6 @@ import com.bloomberglp.blpapi.Name;
 import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
-import com.quant.backtest.multi.strategy.executor.BloombergExecutor;
-import com.quant.backtest.multi.strategy.models.DailyTransaction;
 
 import static com.quant.backtest.multi.strategy.enums.BloombergOrder.*;
 
@@ -26,21 +25,25 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
 
     private static final Name REF_DATA = new Name("ReferenceDataRequest");
     private Long CORRELATION_START_ID = 1000L;
-    private final int DEFAULT_QTY = 1;
+    private final double DEFAULT_DOUBLE = 0.0d;
     
     @Value("${refdata.service.name}")
     private String serviceName;
-
-    public int calculateQuantity(Session session, DailyTransaction dailyTransaction) throws Exception {
-	int quantity = DEFAULT_QTY;
+    
+    @Autowired
+    private BloombergSession bloombergSession;
+    
+    public double fetchLatestPrice(String ticker) throws Exception {
+	double latestPrice = DEFAULT_DOUBLE;
+	Session session = bloombergSession.getSession();
 	Service refDataSvc = session.getService(serviceName);
 	if (refDataSvc == null) {
-	    logger.error("Invalid Service. Returning default Quantity {}", quantity);
-	    return quantity;
+	    logger.error("Invalid Service. Returning default Quantity {}", DEFAULT_DOUBLE);
+	    return DEFAULT_DOUBLE;
 	}
 	CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
 	Request request = refDataSvc.createRequest(REF_DATA.toString());
-	request.append(Security.getValue(), dailyTransaction.getTicker());
+	request.append(Security.getValue(), ticker);
 	request.append(Fields.getValue(), LastPrice.getValue());
 	logger.info("Sending REF DATA request with correlation ID = {}", correlationID);
 	session.sendRequest(request, correlationID);
@@ -50,17 +53,17 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
 	    switch (event.eventType().intValue()) {
 	    case Event.EventType.Constants.PARTIAL_RESPONSE:
 	    case Event.EventType.Constants.RESPONSE:
-		quantity = processResponse(event, dailyTransaction);
+		latestPrice = processResponse(event);
 		continueLoop = false;
 		break;
 	    default:
 		processMiscEvents(event, session);
 	    }
 	}
-	return quantity;
+	return latestPrice;
     }
     
-    private int processResponse(Event event, DailyTransaction dailyTransaction) throws Exception {
+    private double processResponse(Event event) throws Exception {
 	MessageIterator messageIterator = event.messageIterator();
 	while (messageIterator.hasNext()) {
 	    Message message = messageIterator.next();
@@ -91,12 +94,11 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
 		} else {
 		    Element elmFieldData = elmSecurityData.getElement("fieldData");
 		    double lastPrice = elmFieldData.getElementAsFloat64("PX_LAST");
-		    Double quantity = dailyTransaction.getValue().doubleValue() / lastPrice;
-		    logger.info("Fetched Last Price = {} for Security {}. Returning Quantity = {}", lastPrice, security, quantity);
-		    return quantity.intValue();
+		    logger.info("Fetched Price {} for equity {}", lastPrice, security);
+		    return lastPrice;
 		}
 	    }
 	}
-	return DEFAULT_QTY;
+	return DEFAULT_DOUBLE;
     }
 }

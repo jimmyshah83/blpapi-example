@@ -53,11 +53,17 @@
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
 		</dependency>
-
+		<!-- 
 		<dependency>
 			<groupId>com.bloombergblp</groupId>
 			<artifactId>blpapi</artifactId>
 			<version>3.8.8-2</version>
+		</dependency>
+		 -->
+		<dependency>
+			<groupId>BEmu</groupId>
+			<artifactId>BEmu</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -70,6 +76,12 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>r05</version>
+		</dependency>
+		
+		<dependency>
+    		<groupId>org.projectlombok</groupId>
+   			<artifactId>lombok</artifactId>
+   			<scope>provided</scope>
 		</dependency>
 
 	</dependencies>

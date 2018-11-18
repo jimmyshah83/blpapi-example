@@ -51,7 +51,7 @@ public class OptimalMultiStrategyProcessor {
 	    if (inputPropertiesLoader.isUseCash() && tickers.size() < minCashTickers) {
 		IntStream.range(tickers.size(), minCashTickers).forEach(i -> tickers.add(Tickers.CASH.toString()));
 	    } else if (!inputPropertiesLoader.isUseCash() && tickers.size() == 0) {
-		tickers.add("CASH");
+		tickers.add(Tickers.CASH.toString());
 	    }
 	    allStrategyTickers.put(strategyName, tickers);
 	}
