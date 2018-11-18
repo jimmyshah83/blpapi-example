@@ -11,7 +11,7 @@ public class EmailCache {
     
     @PostConstruct
     public void init() {
-	stringBuffer.append("DKFC quant managed account.\n\n");
+	stringBuffer.append("DKFC Quant Managed Account.\n\n");
     }
     
     public void append(String s) {

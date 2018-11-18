@@ -1,5 +1,7 @@
 package com.quant.backtest.multi.strategy.executors;
 
+import java.io.IOException;
+
 import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -21,16 +23,18 @@ public class BloombergSession {
     private int hostPort;
     @Value("${service.name}")
     private String serviceName;
+    @Value("${refdata.service.name}")
+    private String refDataServiceName;
     
     private Session session;
 
     @PostConstruct
-    public void init() {
+    public void init() throws IOException, InterruptedException {
 	SessionOptions sessionOptions = new SessionOptions();
 	sessionOptions.setServerHost(hostName);
 	sessionOptions.setServerPort(hostPort);
 	session = new Session(sessionOptions);
-	if (session.start() && session.openService(serviceName)) {
+	if (session.start() && session.openService(serviceName) && session.openService(refDataServiceName)) {
 	    logger.info("Bloomberg SESSION established.");
 	}
     }

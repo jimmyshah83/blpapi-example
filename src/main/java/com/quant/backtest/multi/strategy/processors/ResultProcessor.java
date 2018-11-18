@@ -94,7 +94,7 @@ public class ResultProcessor {
 		if (!actualPortfolio.containsKey(currentActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		    listCache.cache(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
-		    emailCache.append(Side.BUY.getName() + " " + currentActual.getKey() + " worth $" + finalValue + "\n");
+		    emailCache.append(Side.BUY.getName() + " $" + finalValue + " " + currentActual.getKey() + "\n");
 		}
 	    }
 
@@ -102,7 +102,7 @@ public class ResultProcessor {
 		if (!optimalPortfolio.containsKey(previousActual.getKey())) {
 		    BigDecimal finalValue = multiplier.multiply(previousActual.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-		    emailCache.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+		    emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 		    continue;
 		}
 		if (optimalPortfolio.containsKey(previousActual.getKey())) {
@@ -113,12 +113,12 @@ public class ResultProcessor {
 			if (differenceVal.abs().compareTo(deltaVal) == 1) {
 			    BigDecimal finalValue = multiplier.multiply(differenceVal.abs()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 			    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-			    emailCache.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+			    emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 			}
 		    } else if (differenceVal.compareTo(deltaVal) == 1) {
 			BigDecimal finalValue = multiplier.multiply(differenceVal).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 			listCache.cache(new DailyTransaction(Side.BUY, previousActual.getKey(), finalValue));
-			emailCache.append(Side.BUY.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+			emailCache.append(Side.BUY.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 		    }
 		}
 	    }

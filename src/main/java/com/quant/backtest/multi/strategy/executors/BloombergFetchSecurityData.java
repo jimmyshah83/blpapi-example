@@ -28,7 +28,7 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
     private final double DEFAULT_DOUBLE = 0.0d;
     
     @Value("${refdata.service.name}")
-    private String serviceName;
+    private String refDataServiceName;
     
     @Autowired
     private BloombergSession bloombergSession;
@@ -36,7 +36,7 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
     public double fetchLatestPrice(String ticker) throws Exception {
 	double latestPrice = DEFAULT_DOUBLE;
 	Session session = bloombergSession.getSession();
-	Service refDataSvc = session.getService(serviceName);
+	Service refDataSvc = session.getService(refDataServiceName);
 	if (refDataSvc == null) {
 	    logger.error("Invalid Service. Returning default Quantity {}", DEFAULT_DOUBLE);
 	    return DEFAULT_DOUBLE;
@@ -67,7 +67,7 @@ public class BloombergFetchSecurityData extends BloombergExecutor {
 	MessageIterator messageIterator = event.messageIterator();
 	while (messageIterator.hasNext()) {
 	    Message message = messageIterator.next();
-	    logger.info("MESSAGE = {} for CORRELATION ID = {}", message.toString(), message.correlationID());
+	    logger.debug("MESSAGE = {} for CORRELATION ID = {}", message.toString(), message.correlationID());
 	    Element elmSecurityDataArray = message.getElement("securityData");
 	    for (int valueIndex = 0; valueIndex < elmSecurityDataArray.numValues(); valueIndex++) {
 		Element elmSecurityData = elmSecurityDataArray.getValueAsElement(valueIndex);

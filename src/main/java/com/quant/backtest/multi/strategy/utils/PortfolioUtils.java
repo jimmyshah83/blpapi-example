@@ -74,7 +74,7 @@ public class PortfolioUtils {
      */
     public Map<String, BigDecimal> createActualPortfolio() throws IOException, ParseException {
 	// 1. Fetch actual with 3 columns
-	String filePath = actualPortfolioFilePath + dateUtils.getPreviousNWorkingDay(2) + ".csv";
+	String filePath = actualPortfolioFilePath;
 	if (!fileUtils.doesFileExists(filePath)) {
 	    logger.error("Actual portfolio does not exist. STOPPING execution");
 	    return null;
@@ -97,10 +97,10 @@ public class PortfolioUtils {
 	    // 2a. Calculate the book value & market value for previous day trades
 	    for (PreviousDayTrade previousDayTrade : previousDayTrades) {
 		previousDayTrade.setBloombergID(StringUtils.trim(previousDayTrade.getBloombergID())+TRADER_TICKER_APPENDER);
+		double latestPrice = 0.0d;
 		try {
-		    double latestPrice = securityData.fetchLatestPrice(previousDayTrade.getBloombergID());
-		    previousDayTrade.setBookValue((previousDayTrade.getTgtQty() * previousDayTrade.getAvgFillPx()) - previousDayTrade.getCommission());
-		    previousDayTrade.setMarketValue(previousDayTrade.getTgtQty() * latestPrice);
+		    latestPrice = securityData.fetchLatestPrice(previousDayTrade.getBloombergID());
+		    previousDayTrade.setMarketValue(previousDayTrade.getFillQty() * latestPrice);
 		} catch (Exception e) {
 		    logger.error("Error fetching latest Security Price for ticker: {}. Continuing processing without this ticker.", previousDayTrade.getBloombergID());
 		    continue;
@@ -108,34 +108,52 @@ public class PortfolioUtils {
 
 		// 3. Merge the previous into actual
 		if (StringUtils.equalsIgnoreCase(previousDayTrade.getSide(), Side.BUY.getName())) {
+			previousDayTrade.setBookValue((previousDayTrade.getFillQty() * previousDayTrade.getAvgFillPx()) + previousDayTrade.getCommission());
 		    if (mapCache.containsKey(previousDayTrade.getBloombergID())) {
 			ActualPortfolioTicker actualPortfolioTicker = mapCache.retrieve(previousDayTrade.getBloombergID());
-			actualPortfolioTicker.setQuantity(actualPortfolioTicker.getQuantity() + previousDayTrade.getTgtQty());
-			actualPortfolioTicker.setMarket_Value(actualPortfolioTicker.getMarket_Value().add(new BigDecimal(previousDayTrade.getMarketValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
+			actualPortfolioTicker.setQuantity(actualPortfolioTicker.getQuantity() + previousDayTrade.getFillQty());
+			actualPortfolioTicker.setMarket_Value(new BigDecimal(actualPortfolioTicker.getQuantity() * latestPrice).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 		    } else {
 			ActualPortfolioTicker actualPortfolioTicker = new ActualPortfolioTicker();
-			actualPortfolioTicker.setQuantity(previousDayTrade.getTgtQty());
+			actualPortfolioTicker.setQuantity(previousDayTrade.getFillQty());
 			actualPortfolioTicker.setTicker(previousDayTrade.getBloombergID());
 			actualPortfolioTicker.setMarket_Value(new BigDecimal(previousDayTrade.getMarketValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 			mapCache.cache(previousDayTrade.getBloombergID(), actualPortfolioTicker);
 		    }
 		    actualPortfolioCashTicker.setMarket_Value(actualPortfolioCashTicker.getMarket_Value().subtract(new BigDecimal(previousDayTrade.getBookValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 		} else {
+			previousDayTrade.setBookValue((previousDayTrade.getFillQty() * previousDayTrade.getAvgFillPx()) - previousDayTrade.getCommission());
 		    // It is a sell so Actual should contain this ticker.
 		    ActualPortfolioTicker actualPortfolioTicker = mapCache.retrieve(previousDayTrade.getBloombergID());
-		    if (0.0 != actualPortfolioTicker.getQuantity() - previousDayTrade.getTgtQty()) {
-			actualPortfolioTicker.setQuantity(actualPortfolioTicker.getQuantity() - previousDayTrade.getTgtQty());
-			actualPortfolioTicker.setMarket_Value(actualPortfolioTicker.getMarket_Value().subtract(new BigDecimal(previousDayTrade.getMarketValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
+		    if (0.0 != actualPortfolioTicker.getQuantity() - previousDayTrade.getFillQty()) {
+			actualPortfolioTicker.setQuantity(actualPortfolioTicker.getQuantity() - previousDayTrade.getFillQty());
+			//actualPortfolioTicker.setMarket_Value(actualPortfolioTicker.getMarket_Value().subtract(new BigDecimal(previousDayTrade.getMarketValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
+			actualPortfolioTicker.setMarket_Value(new BigDecimal(actualPortfolioTicker.getQuantity() * latestPrice).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 		    } else {
 			mapCache.remove(actualPortfolioTicker.getTicker());
 		    }
 		    actualPortfolioCashTicker.setMarket_Value(actualPortfolioCashTicker.getMarket_Value().add(new BigDecimal(previousDayTrade.getBookValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 		}
 	    }
-	} 
+	}
+	
+	// Change all the remaining with the latest price
+	for (Entry<String, ActualPortfolioTicker> actualPortfolioTickersMap : mapCache.entrySet()) {
+		ActualPortfolioTicker actualPortfolioTicker = actualPortfolioTickersMap.getValue();
+		if (StringUtils.equalsIgnoreCase(Tickers.CASH.toString(), actualPortfolioTicker.getTicker())) 
+			continue;
+		double latestPrice = 0.0d;
+		try {
+			latestPrice = securityData.fetchLatestPrice(actualPortfolioTicker.getTicker());
+		} catch (Exception e) {
+			logger.error("Error fetching latest Security Price for ticker: {}. Continuing processing without this ticker.", actualPortfolioTicker.getTicker());
+		    continue;
+		}
+		actualPortfolioTicker.setMarket_Value(new BigDecimal(actualPortfolioTicker.getQuantity() * latestPrice).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
+	}
 	
 	// 4. Write the actual portfolio as T-1
-	csvUtils.writeActualPortfolio(actualPortfolioFilePath + dateUtils.getPreviousNWorkingDay(1) + ".csv");
+	csvUtils.writeActualPortfolio("C:\\Users\\James\\Desktop\\James Barnby\\Quant\\005 Execution\\Files\\Actual Portfolio\\actual-" + dateUtils.getPreviousNWorkingDay(1) + ".csv");
 	return createPortfolioWeightedHoldings();
     }
 

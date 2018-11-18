@@ -16,7 +16,7 @@ public class PreviousDayTrade {
     
     private String Side;
     private String BloombergID;
-    private Double TgtQty;
+    private Double FillQty;
     private Double AvgFillPx;
     private Double Commission;
     private Double bookValue;
@@ -25,7 +25,7 @@ public class PreviousDayTrade {
     public Map<String, Object> toMap() {
 	dailyTrades.put("Side", Side);
 	dailyTrades.put("Ticker", BloombergID);
-	dailyTrades.put("Quantity", TgtQty);
+	dailyTrades.put("Quantity", FillQty);
 	dailyTrades.put("Average Fill", AvgFillPx);
 	dailyTrades.put("Commission", Commission);
 	dailyTrades.put("bookValue", bookValue);

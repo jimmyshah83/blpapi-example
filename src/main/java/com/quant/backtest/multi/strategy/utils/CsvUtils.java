@@ -66,7 +66,7 @@ public class CsvUtils {
     public void init() {
 	DESIRED_COLUMNS.put("Side", new NotNull());
 	DESIRED_COLUMNS.put("BloombergID", new NotNull());
-	DESIRED_COLUMNS.put("TgtQty", new ParseDouble());
+	DESIRED_COLUMNS.put("FillQty", new ParseDouble());
 	DESIRED_COLUMNS.put("AvgFillPx", new ParseDouble());
 	DESIRED_COLUMNS.put("Commission", new ParseDouble());
     }
