@@ -51,12 +51,15 @@
 		<smtpPort>587</smtpPort>
 		<STARTTLS>true</STARTTLS>
 		<asynchronousSending>false</asynchronousSending>
-		
+		<!--
 		<username>northernmedallionfund@gmail.com</username>
-		<password>Medallion@123</password>
+		<password>Medallion@123</password>  
+		-->
+		<username>dkfc.quant@gmail.com</username>
+		<password>dkam1234</password>
 		
 		<to>jimmyshah83@gmail.com</to>
-		<from>northernmedallionfund@gmail.com</from>
+		<from>dkfc.quant@gmail.com</from>
 		
 		<subject>Quant fund daily portfolio :: %logger{20} - %m</subject>
 		

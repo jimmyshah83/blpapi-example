@@ -39,8 +39,10 @@ public class EmailUtils {
 	    props.put("mail.smtp.port", "587");
 	    props.put("mail.smtp.auth", "true");
 	    Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+		/**protected PasswordAuthentication getPasswordAuthentication() {
+		    return new PasswordAuthentication("northernmedallionfund@gmail.com", "Medallion@123");*/
 		protected PasswordAuthentication getPasswordAuthentication() {
-		    return new PasswordAuthentication("northernmedallionfund@gmail.com", "Medallion@123");
+			    return new PasswordAuthentication("dkfc.quant@gmail.com", "dkam1234");
 		}
 	    });
 	    MimeMessage msg = new MimeMessage(session);
