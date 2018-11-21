@@ -7,7 +7,6 @@ import java.text.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -28,9 +27,6 @@ public class ConsoleAppliaction implements CommandLineRunner {
     private ResultProcessor resultProcessor;
     @Autowired
     private BloombergCreateOrder createOrder;
-    
-    @Value("${bloomberg.create.order.flag}")
-    private boolean doCreateOrder;
 
     public static void main(String[] args) throws Exception {
 	SpringApplication application = new SpringApplication(ConsoleAppliaction.class);
@@ -42,9 +38,8 @@ public class ConsoleAppliaction implements CommandLineRunner {
     public void run(String... args) {
 	try {
 	    Boolean resultStatus = resultProcessor.process();
-	    if (doCreateOrder && resultStatus)
+	    if (resultStatus)
 		createOrder.placeOrder();
-//	    Below is not an error but a way to send email log to Jimmy.
 	    logger.error("EXECUTION COMPLETED.");
 	} catch (FileNotFoundException e) {
 	    logger.error("FILE UNAVAILABLE, error message: {}", e);

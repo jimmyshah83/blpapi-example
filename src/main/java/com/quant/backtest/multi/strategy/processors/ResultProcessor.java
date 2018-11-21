@@ -2,7 +2,6 @@ package com.quant.backtest.multi.strategy.processors;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,21 +11,19 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.quant.backtest.multi.strategy.cache.SimpleListBasedCache;
+import com.quant.backtest.multi.strategy.cache.EmailCache;
+import com.quant.backtest.multi.strategy.cache.SimpleListCache;
 import com.quant.backtest.multi.strategy.enums.Side;
+import com.quant.backtest.multi.strategy.models.CalculatedVars;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
-import com.quant.backtest.multi.strategy.utils.DateUtils;
 import com.quant.backtest.multi.strategy.utils.Defaults;
 import com.quant.backtest.multi.strategy.utils.EmailUtils;
-import com.quant.backtest.multi.strategy.utils.FileUtils;
 import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 
 /**
@@ -38,29 +35,27 @@ import com.quant.backtest.multi.strategy.utils.PortfolioUtils;
 @Component
 public class ResultProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(ResultProcessor.class);
-
     private List<Double> xList;
 
     @Value("${delta.divider}")
     private String automationXValue;
     @Value("${default.delta}")
     private String defaultDelta;
-    @Value("${actual.portfolio.FilePath}")
-    private String actualPortfolioFilePath;
+    @Value("${send.email}")
+    private boolean sendEmail;
     
     @Autowired
     private MultiDayOptimalMultiStrategyProcessor multiDayOptimalMultiStrategyProcessor;
     @Autowired
     private PortfolioUtils portfolioUtils;
     @Autowired
-    private DateUtils dateUtils;
-    @Autowired
-    private FileUtils fileUtils;
-    @Autowired
-    private SimpleListBasedCache<DailyTransaction> listCache;
+    private SimpleListCache<DailyTransaction> listCache;
     @Autowired
     private EmailUtils emailUtils;
+    @Autowired
+    private CalculatedVars calculatedVars;
+    @Autowired
+    private EmailCache emailCache;
 
     @PostConstruct
     public void init() {
@@ -83,35 +78,31 @@ public class ResultProcessor {
      */
     public Boolean process() throws IOException, ParseException {
 	Map<String, BigDecimal> optimalPortfolio = multiDayOptimalMultiStrategyProcessor.process();
-	Map<String, BigDecimal> actualPortfolio = null;
-	String filePath = actualPortfolioFilePath + "actual-" + dateUtils.getPreviousWorkingDay() + ".csv";
-	if (!fileUtils.doesFileExists(filePath)) {
-	    logger.error("Actual portfolio does not exist. STOPPING execution");
+	 Map<String, BigDecimal> actualPortfolio = portfolioUtils.createActualPortfolio();
+	if (null == actualPortfolio)
 	    return false;
-	}
-	logger.info("Fetching Actual portfolio from Path {}", filePath);
-	actualPortfolio = portfolioUtils.createActualPortfolio(filePath);
 
-	BigDecimal multiplier = new BigDecimal(portfolioUtils.getTotalMarketValueOfPortfolio()).divide(new BigDecimal("100").setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
-
+	BigDecimal multiplier = new BigDecimal(calculatedVars.getTotalMarketValue()).divide(new BigDecimal("100.00"), Defaults.SCALE, Defaults.ROUNDING_MODE);
 	for (Double x : xList) {
 	    Double deltaDouble = (100 / optimalPortfolio.size()) / x;
-	    BigDecimal deltaVal = new BigDecimal(deltaDouble).setScale(1, RoundingMode.HALF_EVEN);
+	    BigDecimal deltaVal = new BigDecimal(deltaDouble).setScale(1, Defaults.ROUNDING_MODE);
 
-	    StringBuilder builder = new StringBuilder("Daily Details with DELTA " + deltaVal.toString() + "\n\n");
+	    emailCache.append("Number of Companies in Optimal = " + optimalPortfolio.size() + "\n");
+	    emailCache.append("Trading Delta = " + deltaVal.toString() + "\n\n");
+	    emailCache.append("Trades Today: \n");
 	    for (Entry<String, BigDecimal> currentActual : optimalPortfolio.entrySet()) {
 		if (!actualPortfolio.containsKey(currentActual.getKey())) {
-		    BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN);
+		    BigDecimal finalValue = multiplier.multiply(currentActual.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		    listCache.cache(new DailyTransaction(Side.BUY, currentActual.getKey(), finalValue));
-		    builder.append(Side.BUY.getName() + " " + currentActual.getKey() + " worth $" + finalValue + "\n");
+		    emailCache.append(Side.BUY.getName() + " $" + finalValue + " " + currentActual.getKey() + "\n");
 		}
 	    }
 
 	    for (Entry<String, BigDecimal> previousActual : actualPortfolio.entrySet()) {
 		if (!optimalPortfolio.containsKey(previousActual.getKey())) {
-		    BigDecimal finalValue = multiplier.multiply(previousActual.getValue());
+		    BigDecimal finalValue = multiplier.multiply(previousActual.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-		    builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+		    emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 		    continue;
 		}
 		if (optimalPortfolio.containsKey(previousActual.getKey())) {
@@ -120,18 +111,19 @@ public class ResultProcessor {
 		    BigDecimal differenceVal = currentVal.subtract(previousVal);
 		    if (differenceVal.signum() == -1) {
 			if (differenceVal.abs().compareTo(deltaVal) == 1) {
-			    BigDecimal finalValue = multiplier.multiply(differenceVal.abs());
+			    BigDecimal finalValue = multiplier.multiply(differenceVal.abs()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 			    listCache.cache(new DailyTransaction(Side.SELL, previousActual.getKey(), finalValue));
-			    builder.append(Side.SELL.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+			    emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 			}
 		    } else if (differenceVal.compareTo(deltaVal) == 1) {
-			BigDecimal finalValue = multiplier.multiply(differenceVal);
+			BigDecimal finalValue = multiplier.multiply(differenceVal).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 			listCache.cache(new DailyTransaction(Side.BUY, previousActual.getKey(), finalValue));
-			builder.append(Side.BUY.getName() + " " + previousActual.getKey() + " worth $" + finalValue + "\n");
+			emailCache.append(Side.BUY.getName() + " $" + finalValue + " " + previousActual.getKey() + "\n");
 		    }
 		}
 	    }
-	    emailUtils.sendEmail(builder.toString());
+	    if (sendEmail)
+		emailUtils.sendEmail();
 	}
 	return true;
     }

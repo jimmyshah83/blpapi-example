@@ -4,6 +4,11 @@ import java.math.BigDecimal;
 
 import com.quant.backtest.multi.strategy.enums.Side;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter @Setter @ToString
 public class DailyTransaction {
 
     private Side side;
@@ -15,20 +20,5 @@ public class DailyTransaction {
 	this.side = side;
 	this.ticker = ticker;
 	this.value = value;
-    }
-    
-    public Side getSide() {
-        return side;
-    }
-    public String getTicker() {
-        return ticker;
-    }
-    public BigDecimal getValue() {
-        return value;
-    }
-    
-    @Override
-    public String toString() {
-	return "DailyTransaction [side=" + side + ", ticker=" + ticker + ", value=" + value + "]";
     }
 }

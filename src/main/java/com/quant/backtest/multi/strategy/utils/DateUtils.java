@@ -11,7 +11,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.quant.backtest.multi.strategy.properties.DatePropertiesLoader;
+import com.quant.backtest.multi.strategy.properties.OtherPropertiesLoader;
 
 @Component
 public class DateUtils {
@@ -20,7 +20,7 @@ public class DateUtils {
     private List<LocalDate> holidays;
     
     @Autowired
-    private DatePropertiesLoader datePropertiesLoader;
+    private OtherPropertiesLoader datePropertiesLoader;
     
     @PostConstruct
     private void init() {
@@ -32,7 +32,7 @@ public class DateUtils {
     }
     
     public List<String> getLastNDays(int numberOfDays) {
-	LocalDate initialDate = LocalDate.parse(getPreviousWorkingDay(), dateTimeFormatter);
+	LocalDate initialDate = LocalDate.parse(getPreviousNWorkingDay(1), dateTimeFormatter);
 	List<String> lastNDays = new ArrayList<>();
 	LocalDate calculatedDate = null;
 	while (numberOfDays != 0) {
@@ -48,8 +48,8 @@ public class DateUtils {
 	return lastNDays;
     }
     
-    public String getPreviousWorkingDay() {
-	LocalDate initialDate = LocalDate.now().minusDays(1);
+    public String getPreviousNWorkingDay(int n) {
+	LocalDate initialDate = LocalDate.now().minusDays(n);
 	LocalDate calculatedDate = null;
 	String retVal = "";
 	int counter = 1;

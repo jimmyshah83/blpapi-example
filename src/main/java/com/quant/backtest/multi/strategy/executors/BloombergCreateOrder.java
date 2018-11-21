@@ -17,9 +17,9 @@ import com.bloomberglp.blpapi.Name;
 import com.bloomberglp.blpapi.Request;
 import com.bloomberglp.blpapi.Service;
 import com.bloomberglp.blpapi.Session;
-import com.quant.backtest.multi.strategy.cache.SimpleListBasedCache;
+import com.quant.backtest.multi.strategy.cache.SimpleListCache;
 import com.quant.backtest.multi.strategy.enums.Tickers;
-import com.quant.backtest.multi.strategy.executor.BloombergExecutor;
+import com.quant.backtest.multi.strategy.executor.utils.BloombergUtils;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 
 import static com.quant.backtest.multi.strategy.enums.BloombergOrder.*;
@@ -39,24 +39,22 @@ public class BloombergCreateOrder extends BloombergExecutor {
     private static final Name ERROR_INFO = new Name("ErrorInfo");
     private static final Name CREATE_ORDER = new Name("CreateOrder");
     private Long CORRELATION_START_ID = 1L;
-
-    @Value("${service.host}")
-    private String hostName;
-    @Value("${service.port}")
-    private int hostPort;
-    @Value("${service.name}")
-    private String serviceName;
+    
     @Value("${bloomberg.order.type}")
     private String orderType;
     @Value("${bloomberg.order.tif}")
     private String tif;
     @Value("${bloomberg.order.handInstruction}")
     private String handInstruction;
+    @Value("${service.name}")
+    private String serviceName;
     
     @Autowired
-    private BloombergFetchSecurityData securityData;
+    private SimpleListCache<DailyTransaction> listCache;
     @Autowired
-    private SimpleListBasedCache<DailyTransaction> listCache;
+    private BloombergSession bloombergSession;
+    @Autowired
+    private BloombergUtils bbgUtils;
 
     /**
      * Creates a session with Bloomberg and places the order daily
@@ -68,39 +66,37 @@ public class BloombergCreateOrder extends BloombergExecutor {
      */
     public void placeOrder() throws IOException, InterruptedException, Exception {
 	logger.info("Starting BLOOMBERG session");
-	Session session = super.createSession(hostName, hostPort);
-	if (session.start() && session.openService(serviceName)) {
-	    Service service = session.getService(serviceName);
-	    for (DailyTransaction dailyTransaction : listCache.fetchCache()) {
-		if (StringUtils.equalsIgnoreCase(Tickers.CASH.name(), dailyTransaction.getTicker())) 
-		    continue;
-		CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
-		logger.info("Processing Transaction {} with Request/Correlation ID {} ", dailyTransaction.toString(), correlationID);
-		Request request = service.createRequest(CREATE_ORDER.toString());
-		request.set(Ticker.getValue(), dailyTransaction.getTicker());
-		request.set(Amount.getValue(), securityData.calculateQuantity(session, dailyTransaction));
-		request.set(OrderType.getValue(), orderType);
-		request.set(Tif.getValue(), tif);
-		request.set(HandInstruction.getValue(), handInstruction);
-		request.set(Side.getValue(), dailyTransaction.getSide().getName());
-		session.sendRequest(request, correlationID);
-		boolean continueLoop = true;
-		while (continueLoop) {
-		    Event event = session.nextEvent();
-		    switch (event.eventType().intValue()) {
-		    case Event.EventType.Constants.PARTIAL_RESPONSE:
-		    case Event.EventType.Constants.RESPONSE:
-			processResponse(event);
-			continueLoop = false;
-			break;
-		    default:
-			processMiscEvents(event, session);
-		    }
+	Session session = bloombergSession.getSession();
+	Service service = session.getService(serviceName);
+	for (DailyTransaction dailyTransaction : listCache.fetchCache()) {
+	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.name(), dailyTransaction.getTicker()))
+		continue;
+	    CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
+	    logger.info("Processing Transaction {} with Request/Correlation ID {} ", dailyTransaction.toString(), correlationID);
+	    Request request = service.createRequest(CREATE_ORDER.toString());
+	    request.set(Ticker.getValue(), dailyTransaction.getTicker());
+	    request.set(Amount.getValue(), bbgUtils.calculateQuantity(dailyTransaction));
+	    request.set(OrderType.getValue(), orderType);
+	    request.set(Tif.getValue(), tif);
+	    request.set(HandInstruction.getValue(), handInstruction);
+	    request.set(Side.getValue(), dailyTransaction.getSide().getName());
+	    session.sendRequest(request, correlationID);
+	    boolean continueLoop = true;
+	    while (continueLoop) {
+		Event event = session.nextEvent();
+		switch (event.eventType().intValue()) {
+		case Event.EventType.Constants.PARTIAL_RESPONSE:
+		case Event.EventType.Constants.RESPONSE:
+		    processResponse(event);
+		    continueLoop = false;
+		    break;
+		default:
+		    processMiscEvents(event, session);
 		}
 	    }
-	    logger.info("BLOOMBERG SESSION completed.");
-	    session.stop();
 	}
+	logger.info("BLOOMBERG SESSION completed.");
+	session.stop();
     }
 
     private void processResponse(Event event) throws Exception {

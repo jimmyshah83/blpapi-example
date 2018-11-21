@@ -14,9 +14,9 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @Configuration
-@PropertySource("classpath:date.properties")
+@PropertySource("classpath:other.properties")
 @ConfigurationProperties(prefix="date")
-public class DatePropertiesLoader {
+public class OtherPropertiesLoader {
     
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE;
     

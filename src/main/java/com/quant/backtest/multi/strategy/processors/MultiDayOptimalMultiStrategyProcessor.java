@@ -2,7 +2,6 @@ package com.quant.backtest.multi.strategy.processors;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -77,7 +76,7 @@ public class MultiDayOptimalMultiStrategyProcessor {
 	}
 	Map<String, BigDecimal> optimalPortfolio = new HashMap<>();
 	for (Entry<String, Double> finalAveragedTickerEntry : finalAveragedTickers.entrySet()) {
-	    optimalPortfolio.put(portfolioUtils.convertToBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, RoundingMode.HALF_EVEN));
+	    optimalPortfolio.put(portfolioUtils.convertToBloombergTicker(finalAveragedTickerEntry.getKey()), new BigDecimal((finalAveragedTickerEntry.getValue() / numberOfDays)).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE));
 	}
 	logger.info("Final set of tickers for optimal portfolio: {}", optimalPortfolio);
 	csvUtils.writeMapToCsv(optimalPortfolioFilePath, optimalPortfolio);
