@@ -153,7 +153,7 @@ public class PortfolioUtils {
 	}
 	
 	// 4. Write the actual portfolio as T-1
-	csvUtils.writeActualPortfolio("C:\\Users\\James\\Desktop\\James Barnby\\Quant\\005 Execution\\Files\\Actual Portfolio\\actual-" + dateUtils.getPreviousNWorkingDay(1) + ".csv");
+	csvUtils.writeActualPortfolio(actualPortfolioFilePath + dateUtils.getPreviousNWorkingDay(1) + ".csv");
 	return createPortfolioWeightedHoldings();
     }
 
