@@ -12,8 +12,4 @@ import lombok.ToString;
 public class CalculatedVars {
 
     private double totalMarketValue;
-    
-    public double getSellThreshold() {
-        return totalMarketValue * 0.005d;
-    }   
 }

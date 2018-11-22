@@ -62,8 +62,8 @@ public class ResultProcessor {
 	    return false;
 
 	BigDecimal multiplier = new BigDecimal(calculatedVars.getTotalMarketValue()).divide(new BigDecimal("100.00"), Defaults.SCALE, Defaults.ROUNDING_MODE);
-	BigDecimal deltaVal = new BigDecimal(delta).setScale(3, RoundingMode.UNNECESSARY);
-	BigDecimal deltaAmount = deltaVal.multiply(new BigDecimal(calculatedVars.getTotalMarketValue())).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
+	BigDecimal deltaVal = new BigDecimal(delta).setScale(Defaults.SCALE, RoundingMode.UNNECESSARY);
+	BigDecimal deltaAmount = deltaVal.multiply(new BigDecimal(calculatedVars.getTotalMarketValue())).divide(new BigDecimal("100"), Defaults.SCALE, Defaults.ROUNDING_MODE);
 
 	emailCache.append("Number of Companies in Optimal = " + optimalPortfolio.size() + "\n");
 	emailCache.append("Trading Delta = " + deltaVal.toString() + "\n\n");
@@ -80,6 +80,10 @@ public class ResultProcessor {
 
 	for (Entry<String, BigDecimal> actuals : actualPortfolio.entrySet()) {
 	    if (!optimalPortfolio.containsKey(actuals.getKey())) {
+		/**
+		 * This would mean we would like to liquidate the entire stock.
+		 * Hence, the final quantity calculation is done while placing this sell order. 
+		 */
 		BigDecimal finalValue = multiplier.multiply(actuals.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		listCache.cache(new DailyTransaction(Side.SELL, actuals.getKey(), finalValue));
 		emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + actuals.getKey() + "\n");
