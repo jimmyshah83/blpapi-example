@@ -31,8 +31,8 @@ public class OptimalMultiStrategyProcessor {
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private CsvUtils csvUtils;
-    @Value("${5m.moving.average.cash}")
-    private int minCashTickers;
+    @Value("${5m.moving.average.min.stocks}")
+    private int movingAvgMinStocks;
 
     /**
      * Combines all strategies for a particular day.
@@ -48,8 +48,8 @@ public class OptimalMultiStrategyProcessor {
 	    if (DEFAULT_DOUBLE.equals(allStrategyWeights.get(strategyName)))
 		continue;
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
-	    if (tickers.size() < minCashTickers) {
-		IntStream.range(tickers.size(), minCashTickers).forEach(i -> tickers.add(Tickers.CASH.toString()));
+	    if (tickers.size() < movingAvgMinStocks) {
+		IntStream.range(tickers.size(), movingAvgMinStocks).forEach(i -> tickers.add(Tickers.CASH.toString()));
 	    } else if (tickers.size() == 0) {
 		tickers.add(Tickers.CASH.toString());
 	    }
