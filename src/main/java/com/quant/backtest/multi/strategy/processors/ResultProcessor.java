@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import com.quant.backtest.multi.strategy.cache.EmailCache;
 import com.quant.backtest.multi.strategy.cache.SimpleListCache;
 import com.quant.backtest.multi.strategy.enums.Side;
+import com.quant.backtest.multi.strategy.enums.Tickers;
 import com.quant.backtest.multi.strategy.models.CalculatedVars;
 import com.quant.backtest.multi.strategy.models.DailyTransaction;
 import com.quant.backtest.multi.strategy.utils.Defaults;
@@ -69,6 +71,8 @@ public class ResultProcessor {
 	emailCache.append("Trading Delta = " + deltaVal.toString() + "\n\n");
 	emailCache.append("Trades Today: \n");
 	for (Entry<String, BigDecimal> optimals : optimalPortfolio.entrySet()) {
+	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.toString(), optimals.getKey())) 
+		continue;
 	    if (!actualPortfolio.containsKey(optimals.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(optimals.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		if (finalValue.compareTo(deltaAmount) >= 0) {
@@ -79,11 +83,10 @@ public class ResultProcessor {
 	}
 
 	for (Entry<String, BigDecimal> actuals : actualPortfolio.entrySet()) {
+	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.toString(), actuals.getKey())) 
+		continue;
 	    if (!optimalPortfolio.containsKey(actuals.getKey())) {
-		/**
-		 * This would mean we would like to liquidate the entire stock.
-		 * Hence, the final quantity calculation is done while placing this sell order. 
-		 */
+		// This would mean we would like to liquidate the entire stock.
 		BigDecimal finalValue = multiplier.multiply(actuals.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
 		listCache.cache(new DailyTransaction(Side.SELL, actuals.getKey(), finalValue));
 		emailCache.append(Side.SELL.getName() + " $" + finalValue + " " + actuals.getKey() + "\n");
@@ -110,12 +113,12 @@ public class ResultProcessor {
 	// Optimal portfolio Email
 	emailCache.append("\n\nOptimal Portfolio: \n");
 	for (Entry<String, BigDecimal> optimals : optimalPortfolio.entrySet()) {
-	    emailCache.append(optimals.getKey() + " - " + optimals.getValue().toString() + "\n");
+	    emailCache.append(optimals.getKey() + " -> " + optimals.getValue().toString() + "%\n");
 	}
 	// Actual portfolio Email
 	emailCache.append("\n\nActual Portfolio: \n");
 	for (Entry<String, BigDecimal> actuals : actualPortfolio.entrySet()) {
-	    emailCache.append(actuals.getKey() + " - " + actuals.getValue().toString() + "\n");
+	    emailCache.append(actuals.getKey() + " -> " + actuals.getValue().toString() + "%\n");
 	}
 	// Send the email
 	if (sendEmail)

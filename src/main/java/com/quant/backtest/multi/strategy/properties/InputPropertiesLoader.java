@@ -21,8 +21,6 @@ public class InputPropertiesLoader {
     private String filePath;
     @NonNull
     private int numberOfDays;
-    @NonNull
-    private boolean useCash;
 
     public void setSortino(Map<String, Double> sortino) {
 	this.sortino = sortino;
@@ -53,11 +51,5 @@ public class InputPropertiesLoader {
     }
     public void setNumberOfDays(int numberOfDays) {
         this.numberOfDays = numberOfDays;
-    }
-    public boolean isUseCash() {
-        return useCash;
-    }
-    public void setUseCash(boolean useCash) {
-        this.useCash = useCash;
     }
 }
