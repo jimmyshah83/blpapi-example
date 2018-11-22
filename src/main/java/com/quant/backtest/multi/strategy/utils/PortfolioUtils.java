@@ -74,7 +74,7 @@ public class PortfolioUtils {
      */
     public Map<String, BigDecimal> createActualPortfolio() throws IOException, ParseException {
 	// 1. Fetch actual with 3 columns
-	String filePath = actualPortfolioFilePath;
+	String filePath = new StringBuffer(actualPortfolioFilePath).append(dateUtils.getPreviousNWorkingDay(2)).append(".csv").toString();
 	if (!fileUtils.doesFileExists(filePath)) {
 	    logger.error("Actual portfolio does not exist. STOPPING execution");
 	    return null;

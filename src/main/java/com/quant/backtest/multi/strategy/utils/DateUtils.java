@@ -18,19 +18,19 @@ public class DateUtils {
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE;
     private List<LocalDate> holidays;
-    
+
     @Autowired
-    private OtherPropertiesLoader datePropertiesLoader;
-    
+    private OtherPropertiesLoader otherPropertiesLoader;
+
     @PostConstruct
     private void init() {
-	holidays = datePropertiesLoader.getHolidays();
+	holidays = otherPropertiesLoader.getHolidays();
     }
 
     public String getCurrentDate() {
 	return dateTimeFormatter.format(LocalDate.now());
     }
-    
+
     public List<String> getLastNDays(int numberOfDays) {
 	LocalDate initialDate = LocalDate.parse(getPreviousNWorkingDay(1), dateTimeFormatter);
 	List<String> lastNDays = new ArrayList<>();
@@ -40,16 +40,24 @@ public class DateUtils {
 	    if (validateDate(calculatedDate)) {
 		lastNDays.add(dateTimeFormatter.format(calculatedDate));
 		initialDate = calculatedDate.minusDays(1);
-		 --numberOfDays;
+		--numberOfDays;
 	    } else {
 		initialDate = calculatedDate.minusDays(1);
 	    }
 	}
 	return lastNDays;
     }
-    
+
     public String getPreviousNWorkingDay(int n) {
-	LocalDate initialDate = LocalDate.now().minusDays(n);
+	String retVal = dateTimeFormatter.format(LocalDate.now());
+	for (int i = n; i > 0; --i) {
+	    retVal = getPreviousWorkingDay(retVal);
+	}
+	return retVal;
+    }
+
+    private String getPreviousWorkingDay(String startDate) {
+	LocalDate initialDate = LocalDate.parse(startDate, dateTimeFormatter).minusDays(1);
 	LocalDate calculatedDate = null;
 	String retVal = "";
 	int counter = 1;
@@ -64,7 +72,7 @@ public class DateUtils {
 	}
 	return retVal;
     }
-    
+
     private boolean validateDate(LocalDate calculatedDate) {
 	return !holidays.contains(calculatedDate) && calculatedDate.getDayOfWeek() != DayOfWeek.SATURDAY && calculatedDate.getDayOfWeek() != DayOfWeek.SUNDAY;
     }
