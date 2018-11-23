@@ -18,6 +18,7 @@ public class InputPropertiesLoader {
     private Map<String, Integer> flag = new HashMap<>();
     private Map<String, String> strategy = new HashMap<>();
     private Map<String, Integer> minStocks = new HashMap<>();
+    private Map<String, Integer> movingAvg = new HashMap<>();
 
     @NonNull
     private String filePath;
@@ -48,7 +49,13 @@ public class InputPropertiesLoader {
     public void setMinStocks(Map<String, Integer> minStocks) {
         this.minStocks = minStocks;
     }
-    public String getFilePath() {
+    public Map<String, Integer> getMovingAvg() {
+		return movingAvg;
+	}
+	public void setMovingAvg(Map<String, Integer> movingAvg) {
+		this.movingAvg = movingAvg;
+	}
+	public String getFilePath() {
 	return filePath;
     }
     public void setFilePath(String filePath) {

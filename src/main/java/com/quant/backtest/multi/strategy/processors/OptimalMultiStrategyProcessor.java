@@ -12,7 +12,6 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.enums.Tickers;
@@ -29,17 +28,17 @@ public class OptimalMultiStrategyProcessor {
     private static final Logger logger = LoggerFactory.getLogger(OptimalMultiStrategyProcessor.class);
     private final Double DEFAULT_DOUBLE = 0.0d;
     private Map<String, Integer> strategyMinStocks;
+    private Map<String, Integer> movingAvgMinStocks;
 
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private CsvUtils csvUtils;
-    @Value("${5m.moving.average.min.stocks}")
-    private int movingAvgMinStocks;
     
     @PostConstruct
     public void init() {
 	strategyMinStocks = inputPropertiesLoader.getMinStocks();
+	movingAvgMinStocks = inputPropertiesLoader.getMovingAvg();
     }
 
     /**
@@ -56,8 +55,9 @@ public class OptimalMultiStrategyProcessor {
 	    if (DEFAULT_DOUBLE.equals(allStrategyWeights.get(strategyName)))
 		continue;
 	    int minimumStocksInStrategy = strategyMinStocks.get(strategyName);
+	    int minimumStocksMovingAveragePerStrategy = movingAvgMinStocks.get(strategyName);
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
-	    if (tickers.size() < movingAvgMinStocks && tickers.size() < minimumStocksInStrategy) {
+	    if (tickers.size() < minimumStocksMovingAveragePerStrategy && tickers.size() < minimumStocksInStrategy) {
 		IntStream.range(tickers.size(), minimumStocksInStrategy).forEach(i -> tickers.add(Tickers.CASH.toString()));
 	    }
 	    allStrategyTickers.put(strategyName, tickers);
