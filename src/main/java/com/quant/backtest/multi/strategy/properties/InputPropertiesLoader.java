@@ -17,6 +17,8 @@ public class InputPropertiesLoader {
     private Map<String, Double> sortino = new HashMap<>();
     private Map<String, Integer> flag = new HashMap<>();
     private Map<String, String> strategy = new HashMap<>();
+    private Map<String, Integer> minStocks = new HashMap<>();
+
     @NonNull
     private String filePath;
     @NonNull
@@ -39,6 +41,12 @@ public class InputPropertiesLoader {
     }
     public void setStrategy(Map<String, String> strategy) {
 	this.strategy = strategy;
+    }
+    public Map<String, Integer> getMinStocks() {
+        return minStocks;
+    }
+    public void setMinStocks(Map<String, Integer> minStocks) {
+        this.minStocks = minStocks;
     }
     public String getFilePath() {
 	return filePath;
