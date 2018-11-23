@@ -2,3 +2,4 @@
 .project
 .settings/
 /target/
+/log.dir_IS_UNDEFINED

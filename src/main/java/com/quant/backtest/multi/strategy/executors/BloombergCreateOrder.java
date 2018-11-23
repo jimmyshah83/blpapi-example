@@ -69,7 +69,7 @@ public class BloombergCreateOrder extends BloombergExecutor {
 	Session session = bloombergSession.getSession();
 	Service service = session.getService(serviceName);
 	for (DailyTransaction dailyTransaction : listCache.fetchCache()) {
-	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.name(), dailyTransaction.getTicker()))
+	    if (StringUtils.containsIgnoreCase(dailyTransaction.getTicker(), Tickers.CASH.name()))
 		continue;
 	    CorrelationID correlationID = new CorrelationID(CORRELATION_START_ID++);
 	    logger.info("Processing Transaction {} with Request/Correlation ID {} ", dailyTransaction.toString(), correlationID);
