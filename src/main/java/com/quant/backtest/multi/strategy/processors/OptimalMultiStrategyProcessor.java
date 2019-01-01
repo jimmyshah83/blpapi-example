@@ -7,10 +7,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.IntStream;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.quant.backtest.multi.strategy.enums.Tickers;
@@ -26,13 +27,19 @@ public class OptimalMultiStrategyProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(OptimalMultiStrategyProcessor.class);
     private final Double DEFAULT_DOUBLE = 0.0d;
+    private Map<String, Integer> strategyMinStocks;
+    private Map<String, Integer> movingAvgMinStocks;
 
     @Autowired
     private InputPropertiesLoader inputPropertiesLoader;
     @Autowired
     private CsvUtils csvUtils;
-    @Value("${min.ticker.for.cash}")
-    private int minCashTickers;
+    
+    @PostConstruct
+    public void init() {
+	strategyMinStocks = inputPropertiesLoader.getMinStocks();
+	movingAvgMinStocks = inputPropertiesLoader.getMovingAvg();
+    }
 
     /**
      * Combines all strategies for a particular day.
@@ -47,11 +54,11 @@ public class OptimalMultiStrategyProcessor {
 	for (String strategyName : inputPropertiesLoader.getStrategy().values()) {
 	    if (DEFAULT_DOUBLE.equals(allStrategyWeights.get(strategyName)))
 		continue;
+	    int minimumStocksInStrategy = strategyMinStocks.get(strategyName);
+	    int minimumStocksMovingAveragePerStrategy = movingAvgMinStocks.get(strategyName);
 	    List<String> tickers = csvUtils.readBacktestedCsv(inputPropertiesLoader.getFilePath() + strategyName + "/" + strategyName + ".BUY.STG." + date + ".csv");
-	    if (inputPropertiesLoader.isUseCash() && tickers.size() < minCashTickers) {
-		IntStream.range(tickers.size(), minCashTickers).forEach(i -> tickers.add(Tickers.CASH.toString()));
-	    } else if (!inputPropertiesLoader.isUseCash() && tickers.size() == 0) {
-		tickers.add(Tickers.CASH.toString());
+	    if (tickers.size() < minimumStocksMovingAveragePerStrategy && tickers.size() < minimumStocksInStrategy) {
+		IntStream.range(tickers.size(), minimumStocksInStrategy).forEach(i -> tickers.add(Tickers.CASH.toString()));
 	    }
 	    allStrategyTickers.put(strategyName, tickers);
 	}

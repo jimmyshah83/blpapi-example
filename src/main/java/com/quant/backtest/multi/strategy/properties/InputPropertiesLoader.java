@@ -17,12 +17,13 @@ public class InputPropertiesLoader {
     private Map<String, Double> sortino = new HashMap<>();
     private Map<String, Integer> flag = new HashMap<>();
     private Map<String, String> strategy = new HashMap<>();
+    private Map<String, Integer> minStocks = new HashMap<>();
+    private Map<String, Integer> movingAvg = new HashMap<>();
+
     @NonNull
     private String filePath;
     @NonNull
     private int numberOfDays;
-    @NonNull
-    private boolean useCash;
 
     public void setSortino(Map<String, Double> sortino) {
 	this.sortino = sortino;
@@ -42,7 +43,19 @@ public class InputPropertiesLoader {
     public void setStrategy(Map<String, String> strategy) {
 	this.strategy = strategy;
     }
-    public String getFilePath() {
+    public Map<String, Integer> getMinStocks() {
+        return minStocks;
+    }
+    public void setMinStocks(Map<String, Integer> minStocks) {
+        this.minStocks = minStocks;
+    }
+    public Map<String, Integer> getMovingAvg() {
+		return movingAvg;
+	}
+	public void setMovingAvg(Map<String, Integer> movingAvg) {
+		this.movingAvg = movingAvg;
+	}
+	public String getFilePath() {
 	return filePath;
     }
     public void setFilePath(String filePath) {
@@ -53,11 +66,5 @@ public class InputPropertiesLoader {
     }
     public void setNumberOfDays(int numberOfDays) {
         this.numberOfDays = numberOfDays;
-    }
-    public boolean isUseCash() {
-        return useCash;
-    }
-    public void setUseCash(boolean useCash) {
-        this.useCash = useCash;
     }
 }
