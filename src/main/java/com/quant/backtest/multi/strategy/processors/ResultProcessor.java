@@ -71,7 +71,7 @@ public class ResultProcessor {
 	emailCache.append("Trading Delta = " + deltaVal.toString() + "\n\n");
 	emailCache.append("Trades Today: \n");
 	for (Entry<String, BigDecimal> optimals : optimalPortfolio.entrySet()) {
-	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.toString(), optimals.getKey())) 
+	    if (StringUtils.containsIgnoreCase(optimals.getKey(), Tickers.CASH.toString()))
 		continue;
 	    if (!actualPortfolio.containsKey(optimals.getKey())) {
 		BigDecimal finalValue = multiplier.multiply(optimals.getValue()).setScale(Defaults.SCALE, Defaults.ROUNDING_MODE);
@@ -83,7 +83,7 @@ public class ResultProcessor {
 	}
 
 	for (Entry<String, BigDecimal> actuals : actualPortfolio.entrySet()) {
-	    if (StringUtils.equalsIgnoreCase(Tickers.CASH.toString(), actuals.getKey())) 
+	    if (StringUtils.containsIgnoreCase(actuals.getKey(), Tickers.CASH.toString()))
 		continue;
 	    if (!optimalPortfolio.containsKey(actuals.getKey())) {
 		// This would mean we would like to liquidate the entire stock.
