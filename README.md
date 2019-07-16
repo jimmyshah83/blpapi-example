@@ -1,4 +1,4 @@
-# Quant executionn platform
+# Quant execution platform
 
 A sample java project to display usage of powerful blpapi to connect to Bloomberg and place trades.
 
